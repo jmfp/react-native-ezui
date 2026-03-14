@@ -15,7 +15,11 @@ export default function Avatar({
         <View
           style={[
             styles.avatarContainer,
-            { backgroundColor: theme.colors.surface },
+            {
+              backgroundColor: theme.colors.surface,
+              borderWidth: 1,
+              borderColor: theme.colors.primary,
+            },
           ]}
         >
           <Image source={{ uri: imageUrl }} style={styles.image} />
@@ -24,7 +28,11 @@ export default function Avatar({
         <View
           style={[
             styles.avatarContainer,
-            { backgroundColor: theme.colors.surface },
+            {
+              backgroundColor: theme.colors.surface,
+              borderWidth: 1,
+              borderColor: theme.colors.primary,
+            },
           ]}
         >
           <Text style={[styles.initial, { color: theme.colors.text }]}>
@@ -43,6 +51,7 @@ const styles = StyleSheet.create({
     borderRadius: 100,
   },
   avatarContainer: {
+    flex: 1,
     width: 100,
     height: 100,
     borderRadius: 100,

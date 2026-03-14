@@ -8,4 +8,5 @@ export type ScreenContainerProps = {
   style?: StyleProp<ViewStyle>;
   refreshing?: boolean;
   onRefresh?: () => void;
+  scrollable?: boolean;
 };
