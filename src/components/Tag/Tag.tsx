@@ -22,6 +22,7 @@ export default function Tag({ label, color, backgroundColor, icon }: TagProps) {
             styles.tag,
             {
               color: theme.colors.text,
+              justifyContent: icon ? "space-between" : "flex-end"
             },
           ]}
         >
