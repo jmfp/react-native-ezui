@@ -28,6 +28,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
   },
+  color: {
+    minHeight: 48,
+  },
   title: {
     padding: 8,
     textAlign: 'center',

@@ -10,7 +10,12 @@ export type ImageCardProps = {
   };
   title: string;
   description: string;
-  onPress: () => void;
+  onPress?: () => void;
+  contentBackgroundVisible?: boolean;
+  contentBackgroundColor?: string;
+  contentBackgroundBlurIntensity?: number;
+  onEdit?: () => void;
+  onDelete?: () => void;
 };
 
 export type ColorCardProps = {

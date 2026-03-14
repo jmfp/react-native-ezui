@@ -26,9 +26,11 @@ export function Button({
       ]}
     >
       {icon != null ? <View style={iconStyle}>{icon}</View> : null}
-      <Text style={[styles.text, { color: theme.colors.text }, textStyle]}>
-        {label}
-      </Text>
+      {label && (
+        <Text style={[styles.text, { color: theme.colors.text }, textStyle]}>
+          {label}
+        </Text>
+      )}
     </TouchableOpacity>
   );
 }

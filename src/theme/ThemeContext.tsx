@@ -17,6 +17,7 @@ export function EzuiThemeProvider({
     if (!userTheme) return defaultTheme;
     return {
       colors: { ...defaultTheme.colors, ...userTheme.colors },
+      constants: { ...defaultTheme.constants, ...userTheme.constants },
     };
   }, [userTheme]);
 

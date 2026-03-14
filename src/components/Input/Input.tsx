@@ -7,11 +7,11 @@ export function Input({
   value,
   onChangeText,
   style,
-  textStyle,
-  icon,
-  iconStyle,
-  error,
-  errorStyle,
+  // textStyle,
+  // icon,
+  // iconStyle,
+  // error,
+  // errorStyle,
 }: InputProps) {
   const theme = useEzuiTheme();
   return (

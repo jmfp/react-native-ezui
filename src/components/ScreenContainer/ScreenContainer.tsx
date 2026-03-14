@@ -1,10 +1,4 @@
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  RefreshControl,
-  SafeAreaView,
-} from 'react-native';
+import { ScrollView, RefreshControl, SafeAreaView } from 'react-native';
 import type { ScreenContainerProps } from './types';
 import { useEzuiTheme } from '../../theme/ThemeContext';
 
@@ -31,7 +25,7 @@ export default function ScreenContainer({
         ]}
         contentContainerStyle={[{ gap }]}
         showsVerticalScrollIndicator={false}
-        pullToRefreshEnabled
+        // pullToRefreshEnabled
         refreshControl={
           <RefreshControl
             tintColor={theme.colors.primary}

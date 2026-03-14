@@ -1,7 +1,7 @@
 import type { ViewStyle, TextStyle } from 'react-native';
 
 export type ButtonProps = {
-  label: string;
+  label?: string;
   onPress: () => void;
   disabled?: boolean;
   variant?: 'primary' | 'secondary' | 'tertiary';

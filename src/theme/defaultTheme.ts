@@ -5,11 +5,14 @@ export const defaultTheme: EzuiTheme = {
     primary: 'orange',
     secondary: 'blue',
     tertiary: 'green',
-    background: 'rgb(15, 15, 15)',
+    background: 'rgb(4, 4, 4)',
     text: 'white',
     textMuted: 'gray',
-    surface: 'rgb(60, 60, 60)',
+    surface: 'rgb(20, 20, 20)',
     shadow: 'black',
     border: 'gray',
+  },
+  constants: {
+    borderRadius: 16,
   },
 };
