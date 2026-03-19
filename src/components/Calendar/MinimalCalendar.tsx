@@ -41,6 +41,13 @@ export default function MinimalCalendar({
       ),
     [calendarMonthId]
   );
+  const yearLabel = useMemo(
+    () =>
+      new Intl.DateTimeFormat('en-US', { year: 'numeric' }).format(
+        new Date(calendarMonthId + 'T00:00:00')
+      ),
+    [calendarMonthId]
+  );
   const eventDateIds = useMemo(
     () =>
       new Set(
@@ -171,7 +178,7 @@ export default function MinimalCalendar({
           </View>
           <Text
             style={[styles.monthTotalEventsText, { color: theme.colors.text }]}
-          >{`$42,361`}</Text>
+          >{`${yearLabel}`}</Text>
         </View>
         <View
           style={[

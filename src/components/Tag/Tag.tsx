@@ -3,7 +3,15 @@ import { useEzuiTheme } from '../../theme/ThemeContext';
 import type { TagProps } from './types';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function Tag({ label, color, backgroundColor, icon }: TagProps) {
+export default function Tag({
+  label,
+  color,
+  backgroundColor,
+  icon,
+  borderRadius,
+  iconColor,
+  textColor,
+}: TagProps) {
   const theme = useEzuiTheme();
   return (
     <View
@@ -12,17 +20,30 @@ export default function Tag({ label, color, backgroundColor, icon }: TagProps) {
         {
           borderColor: color ?? theme.colors.primary,
           backgroundColor: backgroundColor ?? 'transparent',
+          borderRadius: borderRadius ?? theme.constants.borderRadius ?? 10,
         },
       ]}
     >
-      <View style={styles.tagContent}>
-        {icon && <Ionicons name={icon} size={16} color={theme.colors.text} />}
+      <View
+        style={[
+          styles.tagContent,
+          {
+            justifyContent: icon ? 'space-between' : 'flex-end',
+          },
+        ]}
+      >
+        {icon && (
+          <Ionicons
+            name={icon}
+            size={16}
+            color={iconColor ?? theme.colors.text}
+          />
+        )}
         <Text
           style={[
             styles.tag,
             {
-              color: theme.colors.text,
-              justifyContent: icon ? "space-between" : "flex-end"
+              color: textColor ?? theme.colors.text,
             },
           ]}
         >
@@ -48,6 +69,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 8,
     justifyContent: 'space-between',
-    // gap: 4,
   },
 });

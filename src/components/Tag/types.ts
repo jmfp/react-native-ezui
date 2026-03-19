@@ -8,4 +8,7 @@ export type TagProps = {
   color?: string;
   backgroundColor?: string;
   icon?: IoniconsName;
+  borderRadius?: number;
+  iconColor?: string;
+  textColor?: string;
 };

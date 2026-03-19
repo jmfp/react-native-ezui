@@ -1,3 +1,6 @@
+import type { Control } from 'react-hook-form';
+import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
+
 export type CalendarProps = {
   datesWithEvents?: Date[];
   selectedDateId?: string;
@@ -18,4 +21,12 @@ export type MinimalCalendarProps = {
 export type DatePickerProps = {
   date: Date;
   onChange: (date: Date) => void;
+};
+
+export type ControlledDatePickerProps = {
+  control: Control<any>;
+  name: string;
+  error?: string;
+  errorStyle?: StyleProp<TextStyle>;
+  style?: StyleProp<ViewStyle>;
 };
