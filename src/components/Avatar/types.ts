@@ -4,5 +4,6 @@ export type AvatarProps = {
   imageUrl?: string;
   fallbackInitial?: string;
   rounded?: boolean;
+  size?: number;
   style?: StyleProp<ViewStyle>;
 };

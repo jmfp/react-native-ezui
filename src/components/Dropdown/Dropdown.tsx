@@ -9,6 +9,7 @@ export default function Dropdown({
   value,
   onChange,
   onOpenChange,
+  style,
 }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const displayValue =
@@ -20,13 +21,14 @@ export default function Dropdown({
     onOpenChange?.(next);
   };
   return (
-    <Pressable onPress={toggle}>
+    <Pressable onPress={toggle} style={style}>
       <View pointerEvents="none">
         <Input
           placeholder="Select an option"
           value={displayValue}
           onChangeText={() => {}}
           editable={false}
+          style={style}
         />
       </View>
       {isOpen && (

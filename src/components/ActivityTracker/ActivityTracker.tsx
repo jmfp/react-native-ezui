@@ -1,9 +1,10 @@
-import { FlatList, View, StyleSheet, Text } from 'react-native';
+import { FlatList, View, StyleSheet, Text, Pressable } from 'react-native';
 import type { ActivityTrackerProps } from './types';
 import { useEzuiTheme } from '../../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState, useCallback } from 'react';
 import { Button } from '../Button';
+import { isIoniconsGlyphName } from './iconKind';
 
 function getGridDates(days: number): { date: Date; key: string }[] {
   const today = new Date();
@@ -42,6 +43,7 @@ export default function ActivityTracker({
   icon,
   name,
   timeInterval = 'Year',
+  onTitlePress,
 }: ActivityTrackerProps) {
   const theme = useEzuiTheme();
   timeInterval == 'Month'
@@ -83,11 +85,15 @@ export default function ActivityTracker({
     [completedSet, localAdded]
   );
 
-  return (
+  const body = (
     <View>
       <View style={[styles.title, { backgroundColor: theme.colors.surface }]}>
         <View style={styles.activityInforSection}>
-          <Ionicons name={icon} size={24} color={theme.colors.text} />
+          {isIoniconsGlyphName(icon) ? (
+            <Ionicons name={icon as any} size={24} color={theme.colors.text} />
+          ) : (
+            <Text style={{ fontSize: 24, lineHeight: 28 }}>{icon}</Text>
+          )}
           <Text
             style={[
               {
@@ -141,6 +147,14 @@ export default function ActivityTracker({
       </View>
     </View>
   );
+
+  if (onTitlePress) {
+    return (
+      <Pressable onPress={onTitlePress}>{body}</Pressable>
+    );
+  }
+
+  return body;
 }
 
 const styles = StyleSheet.create({
@@ -155,6 +169,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flex: 1,
   },
   container: {
     justifyContent: 'space-between',

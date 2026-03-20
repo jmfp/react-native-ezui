@@ -1,11 +1,10 @@
-import type { IoniconsName } from 'react-native-ezui';
-
 export type ActivityTrackerProps = {
   name: string;
   description: string;
   dates: Array<Date | string>;
   onAddCompletion: (date: Date) => void;
   color: string;
-  icon: IoniconsName;
+  icon: string;
   timeInterval?: 'Week' | 'Month' | 'Year';
+  onTitlePress?: () => void;
 };

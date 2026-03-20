@@ -6,36 +6,42 @@ export default function Avatar({
   imageUrl,
   fallbackInitial,
   rounded,
+  size = 100,
   style,
 }: AvatarProps) {
   const theme = useEzuiTheme();
+  const r = size / 2;
+  const initialFont = Math.max(12, Math.round(size * 0.42));
+  const box = [
+    styles.avatarContainer,
+    {
+      width: size,
+      height: size,
+      borderRadius: rounded === false ? 8 : r,
+    },
+    {
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.primary,
+    },
+  ];
   return (
     <View style={style}>
       {imageUrl ? (
-        <View
-          style={[
-            styles.avatarContainer,
-            {
-              backgroundColor: theme.colors.surface,
-              borderWidth: 1,
-              borderColor: theme.colors.primary,
-            },
-          ]}
-        >
-          <Image source={{ uri: imageUrl }} style={styles.image} />
+        <View style={box}>
+          <Image
+            source={{ uri: imageUrl }}
+            style={{ width: size, height: size, borderRadius: rounded === false ? 8 : r }}
+          />
         </View>
       ) : fallbackInitial ? (
-        <View
-          style={[
-            styles.avatarContainer,
-            {
-              backgroundColor: theme.colors.surface,
-              borderWidth: 1,
-              borderColor: theme.colors.primary,
-            },
-          ]}
-        >
-          <Text style={[styles.initial, { color: theme.colors.text }]}>
+        <View style={box}>
+          <Text
+            style={[
+              styles.initial,
+              { color: theme.colors.text, fontSize: initialFont },
+            ]}
+          >
             {fallbackInitial}
           </Text>
         </View>
@@ -45,21 +51,12 @@ export default function Avatar({
 }
 
 const styles = StyleSheet.create({
-  image: {
-    width: 100,
-    height: 100,
-    borderRadius: 100,
-  },
   avatarContainer: {
-    flex: 1,
-    width: 100,
-    height: 100,
-    borderRadius: 100,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
   },
   initial: {
-    fontSize: 48,
     fontWeight: 'bold',
   },
 });
