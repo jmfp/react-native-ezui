@@ -1,5 +1,5 @@
 {
-  "name": "@icater/ui/ezui",
+  "name": "@springhabt/ui/ezui",
   "version": "0.1.0",
   "description": "A simple to use, highly customizable UI library for react native.",
   "main": "./lib/module/index.js",
@@ -181,7 +181,7 @@
     "babel-loader": "^8.4.1",
     "react-dom": "19.1.0",
     "react-native-gesture-handler": "^2.30.0",
-    "react-native-reanimated": "^4.2.2",
+    "react-native-reanimated": "4.1.6",
     "react-native-safe-area-context": "^5.7.0",
     "react-native-svg": "^15.15.3",
     "storybook": "^10.2.12"

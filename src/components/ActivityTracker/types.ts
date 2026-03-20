@@ -8,3 +8,11 @@ export type ActivityTrackerProps = {
   timeInterval?: 'Week' | 'Month' | 'Year';
   onTitlePress?: () => void;
 };
+
+export type ActivityCellProps = {
+  color: string;
+  completed: boolean;
+  justCompleted: boolean;
+  cellSize: number;
+  borderRadius: number;
+};

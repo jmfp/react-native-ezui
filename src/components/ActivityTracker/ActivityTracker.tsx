@@ -3,8 +3,10 @@ import type { ActivityTrackerProps } from './types';
 import { useEzuiTheme } from '../../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState, useCallback } from 'react';
+import ActivityCell from './ActivityCell';
 import { Button } from '../Button';
 import { isIoniconsGlyphName } from './iconKind';
+import * as Haptics from 'expo-haptics';
 
 function getGridDates(days: number): { date: Date; key: string }[] {
   const today = new Date();
@@ -72,13 +74,23 @@ export default function ActivityTracker({
   }, [dates]);
 
   const [localAdded, setLocalAdded] = useState<Set<string>>(new Set());
+  const [newlyCompletedKey, setNewlyCompletedKey] = useState<string | null>(
+    null
+  );
   const handleAddCompletion = useCallback(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const key = toDayKey(today);
+    if (completedSet.has(key) || localAdded.has(key)) {
+      return;
+    }
     setLocalAdded((prev) => new Set(prev).add(key));
+    setNewlyCompletedKey(key);
+    setTimeout(() => setNewlyCompletedKey(null), 900);
+    // Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     _onAddCompletion(today);
-  }, [_onAddCompletion]);
+  }, [_onAddCompletion, completedSet, localAdded]);
 
   const isCompleted = useCallback(
     (key: string) => completedSet.has(key) || localAdded.has(key),
@@ -86,7 +98,7 @@ export default function ActivityTracker({
   );
 
   const body = (
-    <View>
+    <View style={styles.outerWrap}>
       <View style={[styles.title, { backgroundColor: theme.colors.surface }]}>
         <View style={styles.activityInforSection}>
           {isIoniconsGlyphName(icon) ? (
@@ -126,21 +138,17 @@ export default function ActivityTracker({
           data={gridCells}
           numColumns={COLS}
           scrollEnabled={false}
+          keyExtractor={(item) => item.key}
+          style={styles.flatList}
           contentContainerStyle={styles.container}
           columnWrapperStyle={styles.row}
           renderItem={({ item }) => (
-            <View
-              style={[
-                styles.dateContainer,
-                styles.cell,
-                {
-                  backgroundColor: color,
-                  opacity: isCompleted(item.key) ? 1 : 0.2,
-                  maxHeight: cellSize,
-                  maxWidth: cellSize,
-                  borderRadius: cellBorderRadius,
-                },
-              ]}
+            <ActivityCell
+              color={color}
+              completed={isCompleted(item.key)}
+              justCompleted={item.key === newlyCompletedKey}
+              cellSize={cellSize}
+              borderRadius={cellBorderRadius}
             />
           )}
         />
@@ -149,9 +157,7 @@ export default function ActivityTracker({
   );
 
   if (onTitlePress) {
-    return (
-      <Pressable onPress={onTitlePress}>{body}</Pressable>
-    );
+    return <Pressable onPress={onTitlePress}>{body}</Pressable>;
   }
 
   return body;
@@ -164,6 +170,10 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     borderBottomLeftRadius: 8,
     borderBottomRightRadius: 8,
+    overflow: 'visible',
+  },
+  flatList: {
+    overflow: 'visible',
   },
   activityInforSection: {
     flexDirection: 'row',
@@ -176,12 +186,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
     gap: GAP,
+    overflow: 'visible',
   },
   row: {
     width: '100%',
     flexDirection: 'row',
     gap: GAP,
     marginBottom: GAP,
+    overflow: 'visible',
   },
   title: {
     fontSize: 16,
@@ -193,6 +205,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  outerWrap: {
+    overflow: 'visible',
   },
   dateContainer: {
     borderRadius: 2,

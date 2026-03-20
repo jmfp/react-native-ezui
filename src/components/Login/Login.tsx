@@ -69,5 +69,9 @@ const styles = StyleSheet.create({
   container: {
     gap: 16,
     padding: 16,
+    borderRadius: 16,
+    alignSelf: 'center',
+    width: '100%',
+    marginTop: '60%',
   },
 });
