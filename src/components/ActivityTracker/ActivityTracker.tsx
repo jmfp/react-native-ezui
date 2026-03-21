@@ -86,7 +86,7 @@ export default function ActivityTracker({
     }
     setLocalAdded((prev) => new Set(prev).add(key));
     setNewlyCompletedKey(key);
-    setTimeout(() => setNewlyCompletedKey(null), 900);
+    setTimeout(() => setNewlyCompletedKey(null), 30000);
     // Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     _onAddCompletion(today);

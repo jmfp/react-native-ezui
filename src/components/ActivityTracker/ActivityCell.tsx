@@ -36,29 +36,41 @@ const AnimatedCelebrationCell = memo(function AnimatedCelebrationCell({
   cellSize,
   borderRadius,
 }: Omit<ActivityCellProps, 'justCompleted' | 'completed'>) {
-  const scale = useSharedValue(1);
+  const yPosition = useSharedValue(0);
   const glowBorderWidth = useSharedValue(0);
   const glowShadowOpacity = useSharedValue(0);
-
-  const peakScale = cellSize <= 8 ? 2.2 : cellSize <= 32 ? 1.5 : 1.25;
+  const rotation = useSharedValue(2);
 
   useEffect(() => {
-    scale.value = withSequence(
-      withSpring(peakScale, { damping: 4, stiffness: 400 }),
-      withSpring(1, { damping: 8, stiffness: 180 })
+    yPosition.value = withSequence(
+      withSpring(7, { damping: 8, stiffness: 520, mass: 0.8 }),
+      withSpring(1.5, { damping: 14, stiffness: 420, mass: 0.9 }),
+      withSpring(12, { damping: 10, stiffness: 480, mass: 0.8 }),
+      withSpring(0, { damping: 18, stiffness: 260, mass: 1.1 })
+    );
+    rotation.value = withSequence(
+      withTiming(1, { duration: 1200 }),
+      withTiming(0, { duration: 1800 })
     );
     glowBorderWidth.value = withSequence(
+      withTiming(2, { duration: 80 }),
+      withTiming(1, { duration: 80 }),
+      withTiming(2, { duration: 80 }),
+      withTiming(1, { duration: 80 }),
       withTiming(2, { duration: 80 }),
       withTiming(0, { duration: 820 })
     );
     glowShadowOpacity.value = withSequence(
-      withTiming(1, { duration: 80 }),
+      withTiming(1, { duration: 400 }),
       withTiming(0, { duration: 820 })
     );
   }, []);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    transform: [
+      { translateY: -yPosition.value },
+      { rotate: `${rotation.value * 360}deg` },
+    ],
     borderWidth: glowBorderWidth.value,
     borderColor: color,
     shadowOpacity: glowShadowOpacity.value,
