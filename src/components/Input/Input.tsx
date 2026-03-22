@@ -25,6 +25,7 @@ export function Input({
   type,
   maxLength,
   editable = true,
+  border = false,
 }: InputProps) {
   const theme = useEzuiTheme();
   const keyboardType = type
@@ -39,7 +40,11 @@ export function Input({
       onBlur={onBlur}
       style={[
         styles.input,
-        { borderColor: theme.colors.border, color: theme.colors.text },
+        {
+          backgroundColor: theme.colors.surface,
+          borderColor: !border ? undefined : theme.colors.border,
+          color: theme.colors.text,
+        },
         style,
       ]}
       selectionColor={selectionColor ?? theme.colors.primary}

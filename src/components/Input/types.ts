@@ -2,6 +2,7 @@ import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
 import type { Control } from 'react-hook-form';
 
 export type InputProps = {
+  border?: boolean;
   editable?: boolean;
   selectionColor?: string;
   placeholder: string;

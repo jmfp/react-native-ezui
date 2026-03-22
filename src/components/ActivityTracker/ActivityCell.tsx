@@ -45,11 +45,12 @@ const AnimatedCelebrationCell = memo(function AnimatedCelebrationCell({
     yPosition.value = withSequence(
       withSpring(7, { damping: 8, stiffness: 520, mass: 0.8 }),
       withSpring(1.5, { damping: 14, stiffness: 420, mass: 0.9 }),
-      withSpring(12, { damping: 10, stiffness: 480, mass: 0.8 }),
+      withSpring(12, { damping: 10, stiffness: 1500, mass: 0.8 }),
       withSpring(0, { damping: 18, stiffness: 260, mass: 1.1 })
     );
     rotation.value = withSequence(
-      withTiming(1, { duration: 1200 }),
+      withTiming(0.5, { duration: 1200 }),
+      withTiming(-1, { duration: 1800 }),
       withTiming(0, { duration: 1800 })
     );
     glowBorderWidth.value = withSequence(
