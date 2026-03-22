@@ -1,4 +1,7 @@
-export { default as ActivityTracker } from './ActivityTracker';
+export {
+  default as ActivityTracker,
+  REMOVE_ME_screenshotMockCompletionCount,
+} from './ActivityTracker';
 
 export * from './types';
 export * from './iconKind';

@@ -42,7 +42,7 @@ export function Input({
         styles.input,
         {
           backgroundColor: theme.colors.surface,
-          borderColor: !border ? undefined : theme.colors.border,
+          borderColor: !border ? 'transparent' : theme.colors.border,
           color: theme.colors.text,
         },
         style,

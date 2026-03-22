@@ -23,4 +23,5 @@ export type EzuiThemeOverride = {
 
 export type EzuiConstants = {
   borderRadius: number;
+  fontFamily: string;
 };

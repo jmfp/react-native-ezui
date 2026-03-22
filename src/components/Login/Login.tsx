@@ -1,9 +1,11 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useState } from 'react';
 import type { LoginProps } from './types';
 import { Input } from '../Input';
 import { Button } from '../Button';
 import { useEzuiTheme } from '../../theme/ThemeContext';
+
+const springHabtHeader = require('../../../../../../assets/images/SpringHabtHeader.png');
 
 export default function Login({
   email,
@@ -18,10 +20,12 @@ export default function Login({
   const theme = useEzuiTheme();
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.surface }]}>
+      <Image source={springHabtHeader} style={styles.logo} resizeMode="cover" />
       <Input
         placeholder="Email"
         value={emailInput}
         onChangeText={setEmailInput}
+        style={{ backgroundColor: theme.colors.background }}
       />
       <Input
         placeholder="Password"
@@ -29,6 +33,7 @@ export default function Login({
         onChangeText={setPasswordInput}
         secureTextEntry={true}
         type="password"
+        style={{ backgroundColor: theme.colors.background }}
       />
       {signingUp ? (
         <Input
@@ -37,6 +42,7 @@ export default function Login({
           onChangeText={setConfirmPasswordInput}
           secureTextEntry={true}
           type="password"
+          style={{ backgroundColor: theme.colors.background }}
         />
       ) : null}
       {!signingUp ? (
@@ -73,5 +79,9 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: '100%',
     marginTop: '60%',
+  },
+  logo: {
+    width: '100%',
+    height: 100,
   },
 });

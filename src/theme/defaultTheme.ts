@@ -14,5 +14,6 @@ export const defaultTheme: EzuiTheme = {
   },
   constants: {
     borderRadius: 16,
+    fontFamily: 'SpringFont',
   },
 };
