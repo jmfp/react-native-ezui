@@ -1,44 +1,80 @@
+import { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
+import type { LayoutChangeEvent } from 'react-native';
 import type { ChartProps } from './types';
 import { LineChart } from 'react-native-gifted-charts';
 import { useEzuiTheme } from '../../theme/ThemeContext';
 
-export default function Chart({ dataSet, labels: _labels }: ChartProps) {
+const Y_AXIS_WIDTH = 0;
+const INITIAL_SPACING = 12;
+const END_SPACING = 12;
+
+export default function Chart({
+  dataSet,
+  labels,
+  color1,
+  startFillColor1,
+  endFillColor1,
+  startOpacity = 0.9,
+  endOpacity = 0.2,
+  noOfSections = 4,
+}: ChartProps) {
   const theme = useEzuiTheme();
+  const [chartWidth, setChartWidth] = useState(0);
+
+  const lineColor = color1 ?? theme.colors.primary;
+  const fillStart = startFillColor1 ?? lineColor;
+  const fillEnd = endFillColor1 ?? lineColor;
+
+  const pointCount = dataSet[0]?.data.length ?? 1;
+  const spacing = pointCount > 1
+    ? (chartWidth - INITIAL_SPACING - END_SPACING) / (pointCount - 1)
+    : chartWidth;
+
+  function handleLayout(e: LayoutChangeEvent) {
+    setChartWidth(e.nativeEvent.layout.width);
+  }
+
   return (
-    <View style={styles.chart}>
-      <LineChart
-        areaChart
-        curved
-        dataSet={dataSet}
-        color1={theme.colors.primary}
-        color2={theme.colors.primary}
-        startFillColor1={theme.colors.primary}
-        startFillColor2={theme.colors.primary}
-        endFillColor1={theme.colors.primary}
-        endFillColor2={theme.colors.primary}
-        startOpacity={0.9}
-        endOpacity={0.2}
-        noOfSections={4}
-        spacing={32}
-        hideDataPoints
-        yAxisColor={theme.colors.text}
-        xAxisColor={theme.colors.text}
-        yAxisTextStyle={{ color: theme.colors.text }}
-        hideRules
-      />
+    <View style={styles.chart} onLayout={handleLayout}>
+      {chartWidth > 0 && (
+        <LineChart
+          areaChart
+          dataSet={dataSet}
+          width={chartWidth}
+          initialSpacing={INITIAL_SPACING}
+          endSpacing={END_SPACING}
+          spacing={spacing}
+          color1={lineColor}
+          color2={lineColor}
+          startFillColor1={fillStart}
+          startFillColor2={fillStart}
+          endFillColor1={fillEnd}
+          endFillColor2={fillEnd}
+          startOpacity={startOpacity}
+          endOpacity={endOpacity}
+          noOfSections={noOfSections}
+          hideDataPoints
+          yAxisColor="transparent"
+          xAxisColor={theme.colors.textMuted}
+          hideYAxisText
+          yAxisLabelWidth={Y_AXIS_WIDTH}
+          xAxisLabelTexts={labels}
+          xAxisLabelTextStyle={{
+            color: theme.colors.textMuted,
+            fontSize: 10,
+          }}
+          hideRules
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   chart: {
-    // flex: 1,
     width: '100%',
-    height: 'auto',
-    alignSelf: 'center',
-    justifyContent: 'center',
-    alignItems: 'center',
+    alignSelf: 'stretch',
     overflow: 'hidden',
   },
 });

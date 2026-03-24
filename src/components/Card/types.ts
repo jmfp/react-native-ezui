@@ -23,3 +23,10 @@ export type ColorCardProps = {
   title?: string;
   children: React.ReactNode;
 };
+
+export type QuizCardProps = {
+  questions: string[];
+  answers: string[];
+  currentQuestion: number;
+  onPress?: () => void;
+};

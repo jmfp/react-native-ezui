@@ -38,34 +38,6 @@ function normalizeDate(d: Date | string): Date {
 let COLS = 40;
 const GAP = 2;
 
-const REMOVE_ME_SCREENSHOT_RANDOM_GRID = true;
-
-function hashString(s: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
-
-export function REMOVE_ME_screenshotMockCompletionCount(
-  name: string,
-  timeInterval: 'Week' | 'Month' | 'Year' = 'Year'
-): number | null {
-  if (!REMOVE_ME_SCREENSHOT_RANDOM_GRID) return null;
-  const gridDays =
-    timeInterval === 'Week' ? 7 : timeInterval === 'Month' ? 30 : 365;
-  const cells = getGridDates(gridDays);
-  const nameSalt = hashString(name);
-  let n = 0;
-  for (const { key } of cells) {
-    const v = hashString(`${nameSalt}:${key}`) % 1000;
-    if (v < 520) n += 1;
-  }
-  return n;
-}
-
 export default function ActivityTracker({
   dates = [],
   onAddCompletion: _onAddCompletion,
@@ -125,17 +97,6 @@ export default function ActivityTracker({
     [completedSet, localAdded]
   );
 
-  const screenshotRandomCompleted = useMemo(() => {
-    if (!REMOVE_ME_SCREENSHOT_RANDOM_GRID) return null;
-    const set = new Set<string>();
-    const nameSalt = hashString(name);
-    for (const { key } of gridCells) {
-      const v = hashString(`${nameSalt}:${key}`) % 1000;
-      if (v < 520) set.add(key);
-    }
-    return set;
-  }, [name, gridCells]);
-
   const body = (
     <View style={styles.outerWrap}>
       <View style={[styles.title, { backgroundColor: theme.colors.surface }]}>
@@ -183,11 +144,7 @@ export default function ActivityTracker({
           renderItem={({ item }) => (
             <ActivityCell
               color={color}
-              completed={
-                REMOVE_ME_SCREENSHOT_RANDOM_GRID && screenshotRandomCompleted
-                  ? screenshotRandomCompleted.has(item.key)
-                  : isCompleted(item.key)
-              }
+              completed={isCompleted(item.key)}
               justCompleted={item.key === newlyCompletedKey}
               cellSize={cellSize}
               borderRadius={cellBorderRadius}

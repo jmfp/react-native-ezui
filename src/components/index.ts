@@ -2,6 +2,7 @@ export * from './ActivityTracker';
 export * from './Avatar';
 export * from './Button';
 export * from './Calendar';
+export { default as Chart } from './Chart/Chart';
 export { default as PieChart } from './Chart/PieChart';
 export type {
   PieChartWrapperProps,

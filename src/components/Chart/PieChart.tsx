@@ -1,12 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Animated, Easing, View } from "react-native";
 import type { StyleProp, ViewStyle } from "react-native";
-import Animated, {
-  Easing,
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from "react-native-reanimated";
 import { PieChart as GiftedPieChart } from "react-native-gifted-charts";
 import type { PieChartPropsType, pieDataItem } from "gifted-charts-core";
 
@@ -84,15 +78,20 @@ export default function PieChart({
   incompleteColor,
   singleSliceRole,
   entranceDurationMs = 420,
-  completedSliceDelayMs = 80,
+  completedSliceDelayMs = 200,
   enableCompletedSliceEmphasis = true,
   radius,
   data,
   ...rest
 }: PieChartWrapperProps) {
   const r = radius ?? 120;
+  const maxExtra = Math.max(6, r / 8);
+
   const [emphasizeCompleted, setEmphasizeCompleted] = useState(false);
-  const entrance = useSharedValue(0);
+  const [extraRadiusValue, setExtraRadiusValue] = useState(0);
+
+  const entrance = useRef(new Animated.Value(0)).current;
+  const emphasisAnim = useRef(new Animated.Value(0)).current;
 
   const resolvedData = useMemo(
     () => mergeHabitColors(data, completedColor, incompleteColor, singleSliceRole),
@@ -108,42 +107,74 @@ export default function PieChart({
 
   useEffect(() => {
     setEmphasizeCompleted(false);
-    entrance.value = 0;
-    entrance.value = withTiming(
-      1,
-      {
-        duration: entranceDurationMs,
-        easing: Easing.out(Easing.cubic),
-      },
-      (finished) => {
-        if (!finished || !canEmphasize) return;
-        const schedule = () => {
-          setTimeout(() => {
-            setEmphasizeCompleted(true);
-          }, completedSliceDelayMs);
-        };
-        runOnJS(schedule)();
-      },
-    );
+    emphasisAnim.setValue(0);
+    setExtraRadiusValue(0);
+    entrance.setValue(0);
+    Animated.timing(entrance, {
+      toValue: 1,
+      duration: entranceDurationMs,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (!finished || !canEmphasize) return;
+      setTimeout(() => setEmphasizeCompleted(true), completedSliceDelayMs);
+    });
   }, [resolvedData, canEmphasize, entranceDurationMs, completedSliceDelayMs]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: entrance.value,
-    transform: [{ scale: 0.88 + 0.12 * entrance.value }],
-  }));
+  useEffect(() => {
+    if (!emphasizeCompleted) {
+      emphasisAnim.setValue(0);
+      setExtraRadiusValue(0);
+      return;
+    }
+    const id = emphasisAnim.addListener(({ value }) => {
+      setExtraRadiusValue(value * maxExtra);
+    });
+    Animated.spring(emphasisAnim, {
+      toValue: 1,
+      useNativeDriver: false,
+      tension: 180,
+      friction: 7,
+    }).start();
+    return () => emphasisAnim.removeListener(id);
+  }, [emphasizeCompleted, maxExtra]);
+
+  const opacity = entrance;
+  const scale = entrance.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.88, 1],
+  });
 
   const emphasize = emphasizeCompleted && canEmphasize;
 
+  const displayData = useMemo(() => {
+    if (!emphasize || resolvedData.length === 0) return resolvedData;
+    return resolvedData.map((item, i) =>
+      i === 0 ? { ...item, focused: true } : item,
+    );
+  }, [emphasize, resolvedData]);
+
+  const fixedSize = (r + maxExtra) * 2;
+
   return (
-    <Animated.View style={[containerStyle, animatedStyle]}>
-      <GiftedPieChart
-        {...rest}
-        data={resolvedData}
-        radius={r}
-        focusOnPress={false}
-        focusedPieIndex={emphasize ? 0 : -1}
-        extraRadius={emphasize ? Math.max(6, r / 10) : 0}
-      />
-    </Animated.View>
+    <View
+      style={[
+        containerStyle,
+        { width: fixedSize, height: fixedSize, alignItems: "center", justifyContent: "center" },
+      ]}
+    >
+      <Animated.View style={{ opacity, transform: [{ scale }] }}>
+        <GiftedPieChart
+          {...rest}
+          data={displayData}
+          radius={r}
+          focusOnPress={false}
+          sectionAutoFocus
+          extraRadius={extraRadiusValue}
+          paddingHorizontal={maxExtra}
+          paddingVertical={maxExtra}
+        />
+      </Animated.View>
+    </View>
   );
 }
