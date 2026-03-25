@@ -1,4 +1,9 @@
-import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
+import type {
+  StyleProp,
+  TextStyle,
+  ViewStyle,
+  TextInputProps,
+} from 'react-native';
 import type { Control } from 'react-hook-form';
 
 export type InputProps = {
@@ -15,6 +20,10 @@ export type InputProps = {
   iconStyle?: StyleProp<ViewStyle>;
   error?: string;
   errorStyle?: StyleProp<TextStyle>;
+  autoCapitalize?: TextInputProps['autoCapitalize'];
+  autoCorrect?: boolean;
+  keyboardType?: TextInputProps['keyboardType'];
+  textContentType?: TextInputProps['textContentType'];
   secureTextEntry?: boolean;
   maxLength?: number;
   type?:

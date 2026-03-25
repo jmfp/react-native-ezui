@@ -1,7 +1,7 @@
 import { Text, StyleSheet, Pressable, View, FlatList } from 'react-native';
 import type { PriceCardProps } from './types';
 import { useEzuiTheme } from '../../theme/ThemeContext';
-import { Image } from 'expo-image';
+import { Image, type ImageSource } from 'expo-image';
 import SpringHabtHeader from '../../../../../../assets/images/SpringHabtHeader.png';
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,14 +13,18 @@ export default function PriceCard({
   style,
   features,
   ctaText,
+  defaultExpanded = false,
 }: PriceCardProps) {
   const theme = useEzuiTheme();
-  const [showMore, setShowMore] = useState(false);
+  const [showMore, setShowMore] = useState(defaultExpanded);
   return (
     <View
       style={[styles.card, { backgroundColor: theme.colors.surface }, style]}
     >
-      <Image source={SpringHabtHeader} style={styles.image} />
+      <Image
+        source={SpringHabtHeader as ImageSource}
+        style={styles.image}
+      />
       <Text
         style={[styles.text, { color: theme.colors.text }]}
       >{`$${amount} / ${interval}`}</Text>

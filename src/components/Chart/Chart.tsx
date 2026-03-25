@@ -11,7 +11,8 @@ const END_SPACING = 12;
 
 export default function Chart({
   dataSet,
-  labels,
+  labels = [],
+  hideXAxisLabels = false,
   color1,
   startFillColor1,
   endFillColor1,
@@ -59,7 +60,8 @@ export default function Chart({
           xAxisColor={theme.colors.textMuted}
           hideYAxisText
           yAxisLabelWidth={Y_AXIS_WIDTH}
-          xAxisLabelTexts={labels}
+          xAxisLabelTexts={hideXAxisLabels ? undefined : labels}
+          xAxisLabelsHeight={hideXAxisLabels ? 0 : undefined}
           xAxisLabelTextStyle={{
             color: theme.colors.textMuted,
             fontSize: 10,

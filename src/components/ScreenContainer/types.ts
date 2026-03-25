@@ -6,6 +6,7 @@ export type ScreenContainerProps = {
   paddingVertical?: number;
   gap?: number;
   style?: StyleProp<ViewStyle>;
+  contentContainerStyle?: StyleProp<ViewStyle>;
   refreshing?: boolean;
   onRefresh?: () => void;
   scrollable?: boolean;

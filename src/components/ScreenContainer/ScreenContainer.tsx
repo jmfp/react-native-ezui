@@ -1,10 +1,4 @@
-import {
-  ScrollView,
-  RefreshControl,
-  SafeAreaView,
-  View,
-  StyleSheet,
-} from 'react-native';
+import { ScrollView, RefreshControl, SafeAreaView, View } from 'react-native';
 import type { ScreenContainerProps } from './types';
 import { useEzuiTheme } from '../../theme/ThemeContext';
 
@@ -14,44 +8,57 @@ export default function ScreenContainer({
   paddingVertical = 16,
   gap = 16,
   style,
+  contentContainerStyle,
   refreshing = false,
   onRefresh,
   scrollable = true,
 }: ScreenContainerProps) {
   const theme = useEzuiTheme();
-  const ScrollViewComponent = scrollable ? ScrollView : View;
+  const backgroundColor = theme.colors.background;
+  const paddedContent = {
+    paddingHorizontal,
+    paddingVertical,
+    gap,
+  };
+  const scrollViewFrameStyle = { flex: 1 as const, backgroundColor };
+  const scrollContentStyle = [
+    paddedContent,
+    contentContainerStyle,
+    style,
+  ];
+  const staticOuterStyle = [
+    {
+      flex: 1,
+      paddingHorizontal,
+      paddingVertical,
+      gap,
+      backgroundColor,
+    },
+    contentContainerStyle,
+    style,
+  ];
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <ScrollViewComponent
-        style={[
-          {
-            flex: 1,
-            paddingHorizontal,
-            paddingVertical,
-            gap,
-            backgroundColor: theme.colors.background,
-          },
-          style,
-        ]}
-        contentContainerStyle={[{ gap }]}
-        showsVerticalScrollIndicator={false}
-        // pullToRefreshEnabled
-        refreshControl={
-          <RefreshControl
-            tintColor={theme.colors.primary}
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-          />
-        }
-      >
-        {children}
-      </ScrollViewComponent>
+    <SafeAreaView style={{ flex: 1, backgroundColor }}>
+      {scrollable ? (
+        <ScrollView
+          style={scrollViewFrameStyle}
+          contentContainerStyle={scrollContentStyle}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              tintColor={theme.colors.primary}
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+            />
+          }
+        >
+          {children}
+        </ScrollView>
+      ) : (
+        <View style={staticOuterStyle}>
+          {children}
+        </View>
+      )}
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});

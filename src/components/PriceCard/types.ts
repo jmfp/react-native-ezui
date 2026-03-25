@@ -9,6 +9,7 @@ export type PriceCardProps = {
   style?: StyleProp<ViewStyle>;
   ctaText?: string;
   features?: PriceCardFeature[];
+  defaultExpanded?: boolean;
 };
 
 export type PriceCardFeature = {

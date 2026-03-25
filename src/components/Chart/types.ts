@@ -9,7 +9,8 @@ export type ChartDataSet = {
 
 export type ChartProps = {
   dataSet: ChartDataSet[];
-  labels: string[];
+  labels?: string[];
+  hideXAxisLabels?: boolean;
   spacing?: number;
   color1?: string;
   color2?: string;
