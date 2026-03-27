@@ -7,6 +7,8 @@ export type ChartDataSet = {
   endFillColor?: string;
 };
 
+export type ChartYScale = 'count' | 'percent';
+
 export type ChartProps = {
   dataSet: ChartDataSet[];
   labels?: string[];
@@ -21,4 +23,9 @@ export type ChartProps = {
   startOpacity?: number;
   endOpacity?: number;
   noOfSections?: number;
+  yAxisTitle?: string;
+  yAxisLabelSuffix?: string;
+  yAxisLabelPrefix?: string;
+  formatYLabel?: (label: string) => string;
+  yScale?: ChartYScale;
 };

@@ -1,14 +1,15 @@
 import { useMemo, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Text } from 'react-native';
 import type { LayoutChangeEvent } from 'react-native';
 import type { ChartProps } from './types';
 import { LineChart } from 'react-native-gifted-charts';
 import { useEzuiTheme } from '../../theme/ThemeContext';
 
-const Y_AXIS_WIDTH = 0;
+const Y_AXIS_LABEL_WIDTH = 30;
 const INITIAL_SPACING = 12;
 const END_SPACING = 12;
 const CURVE_OVERFLOW_TOP = 16;
+const CURVE_OVERFLOW_TOP_PERCENT = 22;
 
 function maxAcrossDataSet(dataSet: ChartProps['dataSet']): number {
   let max = 0;
@@ -30,6 +31,15 @@ function yAxisMaxWithHeadroom(dataMax: number): number {
   return dataMax + relative + absolute;
 }
 
+function clampPercentDataSet(dataSet: ChartProps['dataSet']): ChartProps['dataSet'] {
+  return dataSet.map((set) => ({
+    ...set,
+    data: set.data.map((p) => ({
+      value: Math.min(100, Math.max(0, p.value)),
+    })),
+  }));
+}
+
 export default function Chart({
   dataSet,
   labels = [],
@@ -40,6 +50,11 @@ export default function Chart({
   startOpacity = 0.9,
   endOpacity = 0.2,
   noOfSections = 4,
+  yAxisTitle,
+  yAxisLabelSuffix = '',
+  yAxisLabelPrefix = '',
+  formatYLabel,
+  yScale = 'count',
 }: ChartProps) {
   const theme = useEzuiTheme();
   const [chartWidth, setChartWidth] = useState(0);
@@ -48,12 +63,17 @@ export default function Chart({
   const fillStart = startFillColor1 ?? lineColor;
   const fillEnd = endFillColor1 ?? lineColor;
 
-  const scaledMaxValue = useMemo(
-    () => yAxisMaxWithHeadroom(maxAcrossDataSet(dataSet)),
-    [dataSet],
+  const displayDataSet = useMemo(
+    () => (yScale === 'percent' ? clampPercentDataSet(dataSet) : dataSet),
+    [dataSet, yScale],
   );
 
-  const pointCount = dataSet[0]?.data.length ?? 1;
+  const scaledMaxValue = useMemo(() => {
+    if (yScale === 'percent') return 100;
+    return yAxisMaxWithHeadroom(maxAcrossDataSet(dataSet));
+  }, [dataSet, yScale]);
+
+  const pointCount = displayDataSet[0]?.data.length ?? 1;
   const spacing = pointCount > 1
     ? (chartWidth - INITIAL_SPACING - END_SPACING) / (pointCount - 1)
     : chartWidth;
@@ -63,45 +83,82 @@ export default function Chart({
   }
 
   return (
-    <View style={styles.chart} onLayout={handleLayout}>
-      {chartWidth > 0 && (
-        <LineChart
-          areaChart
-          dataSet={dataSet}
-          width={chartWidth}
-          maxValue={scaledMaxValue}
-          overflowTop={CURVE_OVERFLOW_TOP}
-          initialSpacing={INITIAL_SPACING}
-          endSpacing={END_SPACING}
-          spacing={spacing}
-          color1={lineColor}
-          color2={lineColor}
-          startFillColor1={fillStart}
-          startFillColor2={fillStart}
-          endFillColor1={fillEnd}
-          endFillColor2={fillEnd}
-          startOpacity={startOpacity}
-          endOpacity={endOpacity}
-          noOfSections={noOfSections}
-          hideDataPoints
-          yAxisColor="transparent"
-          xAxisColor={theme.colors.textMuted}
-          hideYAxisText
-          yAxisLabelWidth={Y_AXIS_WIDTH}
-          xAxisLabelTexts={hideXAxisLabels ? undefined : labels}
-          xAxisLabelsHeight={hideXAxisLabels ? 0 : undefined}
-          xAxisLabelTextStyle={{
-            color: theme.colors.textMuted,
-            fontSize: 10,
-          }}
-          hideRules
-        />
-      )}
+    <View style={styles.wrap}>
+      {yAxisTitle ? (
+        <Text
+          style={[styles.yAxisTitle, { color: theme.colors.textMuted }]}
+          numberOfLines={2}
+        >
+          {yAxisTitle}
+        </Text>
+      ) : null}
+      <View style={styles.chart} onLayout={handleLayout}>
+        {chartWidth > 0 && (
+          <LineChart
+            areaChart
+            dataSet={displayDataSet}
+            width={chartWidth}
+            maxValue={scaledMaxValue}
+            overflowTop={
+              yScale === 'percent'
+                ? CURVE_OVERFLOW_TOP_PERCENT
+                : CURVE_OVERFLOW_TOP
+            }
+            initialSpacing={INITIAL_SPACING}
+            endSpacing={END_SPACING}
+            spacing={spacing}
+            color1={lineColor}
+            color2={lineColor}
+            startFillColor1={fillStart}
+            startFillColor2={fillStart}
+            endFillColor1={fillEnd}
+            endFillColor2={fillEnd}
+            startOpacity={startOpacity}
+            endOpacity={endOpacity}
+            noOfSections={noOfSections}
+            hideDataPoints
+            yAxisColor="transparent"
+            xAxisColor={theme.colors.textMuted}
+            hideYAxisText={false}
+            yAxisLabelWidth={Y_AXIS_LABEL_WIDTH}
+            yAxisLabelContainerStyle={{
+              alignItems: 'flex-end',
+              paddingRight: 0,
+            }}
+            yAxisTextStyle={{
+              color: theme.colors.textMuted,
+              fontSize: 9,
+              textAlign: 'right',
+            }}
+            yAxisTextNumberOfLines={1}
+            yAxisLabelPrefix={yAxisLabelPrefix}
+            yAxisLabelSuffix={yAxisLabelSuffix}
+            formatYLabel={formatYLabel}
+            xAxisLabelTexts={hideXAxisLabels ? undefined : labels}
+            xAxisLabelsHeight={hideXAxisLabels ? 0 : undefined}
+            xAxisLabelTextStyle={{
+              color: theme.colors.textMuted,
+              fontSize: 10,
+            }}
+            hideRules
+          />
+        )}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrap: {
+    width: '100%',
+    alignSelf: 'stretch',
+  },
+  yAxisTitle: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+  },
   chart: {
     width: '100%',
     alignSelf: 'stretch',

@@ -3,6 +3,7 @@ export * from './Avatar';
 export * from './Button';
 export * from './Calendar';
 export { default as Chart } from './Chart/Chart';
+export type { ChartProps, ChartYScale } from './Chart/types';
 export { default as PieChart } from './Chart/PieChart';
 export type {
   PieChartWrapperProps,
