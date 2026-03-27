@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import type { LayoutChangeEvent } from 'react-native';
 import type { ChartProps } from './types';
@@ -8,6 +8,27 @@ import { useEzuiTheme } from '../../theme/ThemeContext';
 const Y_AXIS_WIDTH = 0;
 const INITIAL_SPACING = 12;
 const END_SPACING = 12;
+const CURVE_OVERFLOW_TOP = 16;
+
+function maxAcrossDataSet(dataSet: ChartProps['dataSet']): number {
+  let max = 0;
+  for (const set of dataSet) {
+    for (const pt of set.data) {
+      const v = pt.value;
+      if (typeof v === 'number' && Number.isFinite(v)) {
+        max = Math.max(max, v);
+      }
+    }
+  }
+  return max;
+}
+
+function yAxisMaxWithHeadroom(dataMax: number): number {
+  if (dataMax <= 0) return 1;
+  const relative = Math.max(dataMax * 0.12, 1);
+  const absolute = dataMax <= 1 ? 0.08 : 0;
+  return dataMax + relative + absolute;
+}
 
 export default function Chart({
   dataSet,
@@ -27,6 +48,11 @@ export default function Chart({
   const fillStart = startFillColor1 ?? lineColor;
   const fillEnd = endFillColor1 ?? lineColor;
 
+  const scaledMaxValue = useMemo(
+    () => yAxisMaxWithHeadroom(maxAcrossDataSet(dataSet)),
+    [dataSet],
+  );
+
   const pointCount = dataSet[0]?.data.length ?? 1;
   const spacing = pointCount > 1
     ? (chartWidth - INITIAL_SPACING - END_SPACING) / (pointCount - 1)
@@ -43,6 +69,8 @@ export default function Chart({
           areaChart
           dataSet={dataSet}
           width={chartWidth}
+          maxValue={scaledMaxValue}
+          overflowTop={CURVE_OVERFLOW_TOP}
           initialSpacing={INITIAL_SPACING}
           endSpacing={END_SPACING}
           spacing={spacing}
