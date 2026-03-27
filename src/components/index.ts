@@ -12,7 +12,6 @@ export type {
 } from './Chart/PieChart';
 export * from './Card';
 export * from './Dropdown';
-export * from './ImageUpload';
 export * from './Input';
 export * from './Login';
 export * from './PriceCard';
