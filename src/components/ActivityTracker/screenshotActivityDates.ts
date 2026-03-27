@@ -1,4 +1,4 @@
-export const ENABLE_HABIT_SCREENSHOT_MOCKS = true;
+export const ENABLE_HABIT_SCREENSHOT_MOCKS = false;
 
 export function buildActivityScreenshotDateKeys(
   timeInterval: "Week" | "Month" | "Year" = "Year",
