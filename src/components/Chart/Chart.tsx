@@ -1,8 +1,16 @@
-import { useMemo, useState } from 'react';
-import { View, StyleSheet, Text } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { View, StyleSheet, Text, AccessibilityInfo } from 'react-native';
 import type { LayoutChangeEvent } from 'react-native';
 import type { ChartProps } from './types';
 import { LineChart } from 'react-native-gifted-charts';
+import Reanimated, {
+  Easing,
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from 'react-native-reanimated';
 import { useEzuiTheme } from '../../theme/ThemeContext';
 
 const Y_AXIS_LABEL_WIDTH = 30;
@@ -10,6 +18,8 @@ const INITIAL_SPACING = 12;
 const END_SPACING = 12;
 const CURVE_OVERFLOW_TOP = 16;
 const CURVE_OVERFLOW_TOP_PERCENT = 22;
+const ENTRANCE_MS = 1800;
+const SCALE_FROM = 0.965;
 
 function maxAcrossDataSet(dataSet: ChartProps['dataSet']): number {
   let max = 0;
@@ -55,9 +65,12 @@ export default function Chart({
   yAxisLabelPrefix = '',
   formatYLabel,
   yScale = 'count',
+  entranceDelayMs = 0,
 }: ChartProps) {
   const theme = useEzuiTheme();
   const [chartWidth, setChartWidth] = useState(0);
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const entrance = useSharedValue(0);
 
   const lineColor = color1 ?? theme.colors.primary;
   const fillStart = startFillColor1 ?? lineColor;
@@ -78,6 +91,47 @@ export default function Chart({
     ? (chartWidth - INITIAL_SPACING - END_SPACING) / (pointCount - 1)
     : chartWidth;
 
+  useEffect(() => {
+    let cancelled = false;
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then((v) => {
+        if (!cancelled) setReduceMotion(v);
+      })
+      .catch(() => {});
+    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', (v) => {
+      setReduceMotion(v);
+    });
+    return () => {
+      cancelled = true;
+      sub.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (chartWidth <= 0) return;
+    if (reduceMotion) {
+      entrance.value = 1;
+      return;
+    }
+    entrance.value = 0;
+    entrance.value = withDelay(
+      entranceDelayMs,
+      withTiming(1, {
+        duration: ENTRANCE_MS,
+        easing: Easing.out(Easing.cubic),
+      }),
+    );
+  }, [chartWidth, reduceMotion, entranceDelayMs, entrance]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: entrance.value,
+    transform: [
+      {
+        scale: interpolate(entrance.value, [0, 1], [SCALE_FROM, 1]),
+      },
+    ],
+  }));
+
   function handleLayout(e: LayoutChangeEvent) {
     setChartWidth(e.nativeEvent.layout.width);
   }
@@ -92,58 +146,61 @@ export default function Chart({
           {yAxisTitle}
         </Text>
       ) : null}
-      <View style={styles.chart} onLayout={handleLayout}>
-        {chartWidth > 0 && (
-          <LineChart
-            areaChart
-            dataSet={displayDataSet}
-            width={chartWidth}
-            maxValue={scaledMaxValue}
-            overflowTop={
-              yScale === 'percent'
-                ? CURVE_OVERFLOW_TOP_PERCENT
-                : CURVE_OVERFLOW_TOP
-            }
-            initialSpacing={INITIAL_SPACING}
-            endSpacing={END_SPACING}
-            spacing={spacing}
-            color1={lineColor}
-            color2={lineColor}
-            startFillColor1={fillStart}
-            startFillColor2={fillStart}
-            endFillColor1={fillEnd}
-            endFillColor2={fillEnd}
-            startOpacity={startOpacity}
-            endOpacity={endOpacity}
-            noOfSections={noOfSections}
-            hideDataPoints
-            yAxisColor="transparent"
-            xAxisColor={theme.colors.textMuted}
-            hideYAxisText={false}
-            yAxisLabelWidth={Y_AXIS_LABEL_WIDTH}
-            yAxisLabelContainerStyle={{
-              alignItems: 'flex-end',
-              paddingRight: 0,
-            }}
-            yAxisTextStyle={{
-              color: theme.colors.textMuted,
-              fontSize: 9,
-              textAlign: 'right',
-            }}
-            yAxisTextNumberOfLines={1}
-            yAxisLabelPrefix={yAxisLabelPrefix}
-            yAxisLabelSuffix={yAxisLabelSuffix}
-            formatYLabel={formatYLabel}
-            xAxisLabelTexts={hideXAxisLabels ? undefined : labels}
-            xAxisLabelsHeight={hideXAxisLabels ? 0 : undefined}
-            xAxisLabelTextStyle={{
-              color: theme.colors.textMuted,
-              fontSize: 10,
-            }}
-            hideRules
-          />
-        )}
-      </View>
+      <Reanimated.View style={animatedStyle}>
+        <View style={styles.chart} onLayout={handleLayout}>
+          {chartWidth > 0 && (
+            <LineChart
+              areaChart
+              dataSet={displayDataSet}
+              width={chartWidth}
+              maxValue={scaledMaxValue}
+              overflowTop={
+                yScale === 'percent'
+                  ? CURVE_OVERFLOW_TOP_PERCENT
+                  : CURVE_OVERFLOW_TOP
+              }
+              initialSpacing={INITIAL_SPACING}
+              endSpacing={END_SPACING}
+              spacing={spacing}
+              color1={lineColor}
+              color2={lineColor}
+              startFillColor1={fillStart}
+              startFillColor2={fillStart}
+              endFillColor1={fillEnd}
+              endFillColor2={fillEnd}
+              startOpacity={startOpacity}
+              endOpacity={endOpacity}
+              noOfSections={noOfSections}
+              hideDataPoints
+              isAnimated={false}
+              yAxisColor="transparent"
+              xAxisColor={theme.colors.textMuted}
+              hideYAxisText={false}
+              yAxisLabelWidth={Y_AXIS_LABEL_WIDTH}
+              yAxisLabelContainerStyle={{
+                alignItems: 'flex-end',
+                paddingRight: 0,
+              }}
+              yAxisTextStyle={{
+                color: theme.colors.textMuted,
+                fontSize: 9,
+                textAlign: 'right',
+              }}
+              yAxisTextNumberOfLines={1}
+              yAxisLabelPrefix={yAxisLabelPrefix}
+              yAxisLabelSuffix={yAxisLabelSuffix}
+              formatYLabel={formatYLabel}
+              xAxisLabelTexts={hideXAxisLabels ? undefined : labels}
+              xAxisLabelsHeight={hideXAxisLabels ? 0 : undefined}
+              xAxisLabelTextStyle={{
+                color: theme.colors.textMuted,
+                fontSize: 10,
+              }}
+              hideRules
+            />
+          )}
+        </View>
+      </Reanimated.View>
     </View>
   );
 }

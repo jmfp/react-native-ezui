@@ -1,8 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Animated, Easing, View } from "react-native";
+import { AccessibilityInfo, Animated, View } from "react-native";
 import type { StyleProp, ViewStyle } from "react-native";
 import { PieChart as GiftedPieChart } from "react-native-gifted-charts";
 import type { PieChartPropsType, pieDataItem } from "gifted-charts-core";
+import Reanimated, {
+  Easing,
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from "react-native-reanimated";
 
 export type { PieChartPropsType, pieDataItem } from "gifted-charts-core";
 
@@ -12,9 +20,12 @@ export type PieChartWrapperProps = PieChartPropsType & {
   incompleteColor?: string;
   singleSliceRole?: "completed" | "incomplete";
   entranceDurationMs?: number;
+  entranceDelayMs?: number;
   completedSliceDelayMs?: number;
   enableCompletedSliceEmphasis?: boolean;
 };
+
+const ENTRANCE_SCALE_FROM = 0.96;
 
 function mergeHabitColors(
   data: pieDataItem[],
@@ -77,7 +88,8 @@ export default function PieChart({
   completedColor,
   incompleteColor,
   singleSliceRole,
-  entranceDurationMs = 420,
+  entranceDurationMs = 1800,
+  entranceDelayMs = 0,
   completedSliceDelayMs = 200,
   enableCompletedSliceEmphasis = true,
   radius,
@@ -89,8 +101,9 @@ export default function PieChart({
 
   const [emphasizeCompleted, setEmphasizeCompleted] = useState(false);
   const [extraRadiusValue, setExtraRadiusValue] = useState(0);
+  const [reduceMotion, setReduceMotion] = useState(false);
 
-  const entrance = useRef(new Animated.Value(0)).current;
+  const entrance = useSharedValue(0);
   const emphasisAnim = useRef(new Animated.Value(0)).current;
 
   const resolvedData = useMemo(
@@ -106,20 +119,65 @@ export default function PieChart({
   );
 
   useEffect(() => {
+    let cancelled = false;
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then((v) => {
+        if (!cancelled) setReduceMotion(v);
+      })
+      .catch(() => {});
+    const sub = AccessibilityInfo.addEventListener("reduceMotionChanged", (v) => {
+      setReduceMotion(v);
+    });
+    return () => {
+      cancelled = true;
+      sub.remove();
+    };
+  }, []);
+
+  useEffect(() => {
     setEmphasizeCompleted(false);
     emphasisAnim.setValue(0);
     setExtraRadiusValue(0);
-    entrance.setValue(0);
-    Animated.timing(entrance, {
-      toValue: 1,
-      duration: entranceDurationMs,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-    }).start(({ finished }) => {
-      if (!finished || !canEmphasize) return;
-      setTimeout(() => setEmphasizeCompleted(true), completedSliceDelayMs);
-    });
-  }, [resolvedData, canEmphasize, entranceDurationMs, completedSliceDelayMs]);
+
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+    if (reduceMotion) {
+      entrance.value = 1;
+      if (canEmphasize) {
+        timeoutId = setTimeout(() => setEmphasizeCompleted(true), completedSliceDelayMs);
+      }
+      return () => {
+        if (timeoutId) clearTimeout(timeoutId);
+      };
+    }
+
+    entrance.value = 0;
+    entrance.value = withDelay(
+      entranceDelayMs,
+      withTiming(1, {
+        duration: entranceDurationMs,
+        easing: Easing.out(Easing.cubic),
+      }),
+    );
+
+    if (canEmphasize) {
+      const waitMs =
+        entranceDelayMs + entranceDurationMs + completedSliceDelayMs;
+      timeoutId = setTimeout(() => setEmphasizeCompleted(true), waitMs);
+    }
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [
+    resolvedData,
+    canEmphasize,
+    entranceDurationMs,
+    entranceDelayMs,
+    completedSliceDelayMs,
+    reduceMotion,
+    entrance,
+  ]);
 
   useEffect(() => {
     if (!emphasizeCompleted) {
@@ -133,17 +191,20 @@ export default function PieChart({
     Animated.spring(emphasisAnim, {
       toValue: 1,
       useNativeDriver: false,
-      tension: 180,
-      friction: 7,
+      tension: 95,
+      friction: 11,
     }).start();
     return () => emphasisAnim.removeListener(id);
-  }, [emphasizeCompleted, maxExtra]);
+  }, [emphasizeCompleted, maxExtra, emphasisAnim]);
 
-  const opacity = entrance;
-  const scale = entrance.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.88, 1],
-  });
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: entrance.value,
+    transform: [
+      {
+        scale: interpolate(entrance.value, [0, 1], [ENTRANCE_SCALE_FROM, 1]),
+      },
+    ],
+  }));
 
   const emphasize = emphasizeCompleted && canEmphasize;
 
@@ -163,7 +224,7 @@ export default function PieChart({
         { width: fixedSize, height: fixedSize, alignItems: "center", justifyContent: "center" },
       ]}
     >
-      <Animated.View style={{ opacity, transform: [{ scale }] }}>
+      <Reanimated.View style={animatedStyle}>
         <GiftedPieChart
           {...rest}
           data={displayData}
@@ -173,8 +234,9 @@ export default function PieChart({
           extraRadius={extraRadiusValue}
           paddingHorizontal={maxExtra}
           paddingVertical={maxExtra}
+          isAnimated={false}
         />
-      </Animated.View>
+      </Reanimated.View>
     </View>
   );
 }

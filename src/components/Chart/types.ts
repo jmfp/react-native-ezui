@@ -28,4 +28,5 @@ export type ChartProps = {
   yAxisLabelPrefix?: string;
   formatYLabel?: (label: string) => string;
   yScale?: ChartYScale;
+  entranceDelayMs?: number;
 };

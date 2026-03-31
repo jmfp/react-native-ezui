@@ -5,6 +5,7 @@ export type ScreenContainerProps = {
   paddingHorizontal?: number;
   paddingVertical?: number;
   gap?: number;
+  keyboardVerticalOffset?: number;
   style?: StyleProp<ViewStyle>;
   contentContainerStyle?: StyleProp<ViewStyle>;
   refreshing?: boolean;

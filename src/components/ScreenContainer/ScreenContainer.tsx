@@ -1,4 +1,11 @@
-import { ScrollView, RefreshControl, SafeAreaView, View } from 'react-native';
+import {
+  ScrollView,
+  RefreshControl,
+  SafeAreaView,
+  View,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import type { ScreenContainerProps } from './types';
 import { useEzuiTheme } from '../../theme/ThemeContext';
 
@@ -12,6 +19,7 @@ export default function ScreenContainer({
   refreshing = false,
   onRefresh,
   scrollable = true,
+  keyboardVerticalOffset = 0,
 }: ScreenContainerProps) {
   const theme = useEzuiTheme();
   const backgroundColor = theme.colors.background;
@@ -39,26 +47,32 @@ export default function ScreenContainer({
   ];
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor }}>
-      {scrollable ? (
-        <ScrollView
-          style={scrollViewFrameStyle}
-          contentContainerStyle={scrollContentStyle}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              tintColor={theme.colors.primary}
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-            />
-          }
-        >
-          {children}
-        </ScrollView>
-      ) : (
-        <View style={staticOuterStyle}>
-          {children}
-        </View>
-      )}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={keyboardVerticalOffset}
+      >
+        {scrollable ? (
+          <ScrollView
+            style={scrollViewFrameStyle}
+            contentContainerStyle={scrollContentStyle}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                tintColor={theme.colors.primary}
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+              />
+            }
+          >
+            {children}
+          </ScrollView>
+        ) : (
+          <View style={staticOuterStyle}>
+            {children}
+          </View>
+        )}
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
