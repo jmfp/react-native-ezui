@@ -2,11 +2,21 @@ import { FlatList, View, StyleSheet, Text, Pressable } from 'react-native';
 import type { ActivityTrackerProps } from './types';
 import { useEzuiTheme } from '../../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import ActivityCell from './ActivityCell';
 import { Button } from '../Button';
 import { HabitIcon } from '../HabitIcon';
 import * as Haptics from 'expo-haptics';
+import Animated, {
+  Easing,
+  interpolate,
+  interpolateColor,
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 function getGridDates(days: number): { date: Date; key: string }[] {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -103,6 +113,84 @@ export default function ActivityTracker({
     return isCompleted(toDayKey(today));
   }, [isCompleted]);
 
+  const accent = color ?? theme.colors.primary;
+  const pressPopScale = useSharedValue(1);
+  const completeProgress = useSharedValue(todayCompleted ? 0 : 1);
+  const completionPressShrunkRef = useRef(false);
+  const completionInitRef = useRef(false);
+  useEffect(() => {
+    if (!completionInitRef.current) {
+      completeProgress.value = todayCompleted ? 0 : 1;
+      completionInitRef.current = true;
+      return;
+    }
+    completeProgress.value = withTiming(todayCompleted ? 0 : 1, {
+      duration: 320,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [todayCompleted]);
+
+  const completionButtonStyle = useAnimatedStyle(() => {
+    const backgroundColor = interpolateColor(
+      completeProgress.value,
+      [0, 1],
+      [accent, 'transparent']
+    );
+    const borderWidth = interpolate(completeProgress.value, [0, 1], [0, 2]);
+    const shadowOpacity = interpolate(completeProgress.value, [0, 1], [0.25, 0]);
+    const elevation = interpolate(completeProgress.value, [0, 1], [5, 0]);
+    return {
+      transform: [{ scale: pressPopScale.value }],
+      backgroundColor,
+      borderWidth,
+      borderColor: accent,
+      shadowColor: theme.colors.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity,
+      shadowRadius: 3.84,
+      elevation,
+    };
+  });
+
+  const onCompletionPressIn = useCallback(() => {
+    completionPressShrunkRef.current = true;
+    pressPopScale.value = withTiming(0.88, {
+      duration: 55,
+      easing: Easing.out(Easing.quad),
+    });
+  }, [pressPopScale]);
+
+  const onCompletionPressOut = useCallback(() => {
+    if (!completionPressShrunkRef.current) {
+      return;
+    }
+    completionPressShrunkRef.current = false;
+    pressPopScale.value = withSequence(
+      withSpring(1.15, { damping: 10, stiffness: 620, mass: 0.3 }),
+      withSpring(1, { damping: 15, stiffness: 400, mass: 0.42 })
+    );
+  }, [pressPopScale]);
+
+  const iconLayerBase = {
+    position: 'absolute' as const,
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  };
+
+  const completionIconPrimaryStyle = useAnimatedStyle(() => ({
+    ...iconLayerBase,
+    opacity: 1 - completeProgress.value,
+  }));
+
+  const completionIconOutlineStyle = useAnimatedStyle(() => ({
+    ...iconLayerBase,
+    opacity: completeProgress.value,
+  }));
+
   const body = (
     <View style={styles.outerWrap}>
       <View style={[styles.title, { backgroundColor: theme.colors.surface }]}>
@@ -130,22 +218,40 @@ export default function ActivityTracker({
               style={styles.toolbarIconButton}
             />
           ))}
-          <Button
-            variant={todayCompleted ? 'primary' : 'outline'}
-            icon={
-              <Ionicons
-                name="checkmark-outline"
-                size={16}
-                color={todayCompleted ? theme.colors.text : color}
-              />
-            }
-            color={color}
+          <Pressable
             onPress={handleAddCompletion}
+            onPressIn={onCompletionPressIn}
+            onPressOut={onCompletionPressOut}
+            accessibilityRole="button"
             accessibilityLabel={
               todayCompleted ? 'Completed today' : 'Mark today complete'
             }
             style={styles.toolbarIconButton}
-          />
+          >
+            <Animated.View
+              style={[
+                styles.completionButtonFace,
+                completionButtonStyle,
+              ]}
+            >
+              <View style={styles.completionIconStack}>
+                <Animated.View style={completionIconPrimaryStyle}>
+                  <Ionicons
+                    name="checkmark-outline"
+                    size={16}
+                    color={theme.colors.text}
+                  />
+                </Animated.View>
+                <Animated.View style={completionIconOutlineStyle}>
+                  <Ionicons
+                    name="checkmark-outline"
+                    size={16}
+                    color={accent}
+                  />
+                </Animated.View>
+              </View>
+            </Animated.View>
+          </Pressable>
         </View>
       </View>
       <View
@@ -239,6 +345,19 @@ const styles = StyleSheet.create({
     height: 50,
     padding: 0,
     borderRadius: 16,
+  },
+  completionButtonFace: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  completionIconStack: {
+    width: 24,
+    height: 24,
+    position: 'relative',
   },
   outerWrap: {
     overflow: 'visible',
