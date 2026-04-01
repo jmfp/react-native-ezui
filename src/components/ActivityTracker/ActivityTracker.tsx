@@ -7,11 +7,6 @@ import ActivityCell from './ActivityCell';
 import { Button } from '../Button';
 import { isIoniconsGlyphName } from './iconKind';
 import * as Haptics from 'expo-haptics';
-import {
-  ENABLE_HABIT_SCREENSHOT_MOCKS,
-  buildActivityScreenshotDateKeys,
-} from './screenshotActivityDates';
-
 function getGridDates(days: number): { date: Date; key: string }[] {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -68,21 +63,14 @@ export default function ActivityTracker({
 
   const gridCells = useMemo(() => getGridDates(gridDays), [gridDays]);
 
-  const datesForCompletionSet = useMemo(() => {
-    if (!ENABLE_HABIT_SCREENSHOT_MOCKS) return dates;
-    return buildActivityScreenshotDateKeys(timeInterval).map(
-      (k) => `${k}T12:00:00.000Z`,
-    );
-  }, [dates, timeInterval]);
-
   const completedSet = useMemo(() => {
     const set = new Set<string>();
-    for (const d of datesForCompletionSet) {
+    for (const d of dates) {
       const date = normalizeDate(d);
       if (!isNaN(date.getTime())) set.add(toDayKey(date));
     }
     return set;
-  }, [datesForCompletionSet]);
+  }, [dates]);
 
   const [localAdded, setLocalAdded] = useState<Set<string>>(new Set());
   const [newlyCompletedKey, setNewlyCompletedKey] = useState<string | null>(
