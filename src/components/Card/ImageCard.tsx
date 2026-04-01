@@ -77,6 +77,7 @@ export function ImageCard({
                   <Button
                     label="Delete"
                     onPress={onDelete}
+                    color="red"
                     icon={
                       <Ionicons name="trash-outline" size={24} color="red" />
                     }

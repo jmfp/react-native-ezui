@@ -1,3 +1,13 @@
+import type { ReactNode } from 'react';
+
+export type ActivityTrackerHeaderAction = {
+  key: string;
+  icon: ReactNode;
+  onPress: () => void;
+  accessibilityLabel: string;
+  variant?: 'outline' | 'primary';
+};
+
 export type ActivityTrackerProps = {
   name: string;
   description: string;
@@ -7,6 +17,7 @@ export type ActivityTrackerProps = {
   icon: string;
   timeInterval?: 'Week' | 'Month' | 'Year';
   onTitlePress?: () => void;
+  headerActions?: ActivityTrackerHeaderAction[];
 };
 
 export type ActivityCellProps = {

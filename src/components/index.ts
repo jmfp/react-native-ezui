@@ -12,6 +12,7 @@ export type {
 } from './Chart/PieChart';
 export * from './Card';
 export * from './Dropdown';
+export * from './HabitIcon';
 export * from './Input';
 export * from './Login';
 export * from './MarkdownComposer';

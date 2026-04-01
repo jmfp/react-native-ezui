@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState, useCallback } from 'react';
 import ActivityCell from './ActivityCell';
 import { Button } from '../Button';
-import { isIoniconsGlyphName } from './iconKind';
+import { HabitIcon } from '../HabitIcon';
 import * as Haptics from 'expo-haptics';
 function getGridDates(days: number): { date: Date; key: string }[] {
   const today = new Date();
@@ -45,6 +45,7 @@ export default function ActivityTracker({
   name,
   timeInterval = 'Year',
   onTitlePress,
+  headerActions,
 }: ActivityTrackerProps) {
   const theme = useEzuiTheme();
   timeInterval == 'Month'
@@ -96,15 +97,17 @@ export default function ActivityTracker({
     [completedSet, localAdded]
   );
 
+  const todayCompleted = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return isCompleted(toDayKey(today));
+  }, [isCompleted]);
+
   const body = (
     <View style={styles.outerWrap}>
       <View style={[styles.title, { backgroundColor: theme.colors.surface }]}>
         <View style={styles.activityInforSection}>
-          {isIoniconsGlyphName(icon) ? (
-            <Ionicons name={icon as any} size={24} color={theme.colors.text} />
-          ) : (
-            <Text style={{ fontSize: 24, lineHeight: 28 }}>{icon}</Text>
-          )}
+          <HabitIcon icon={icon} size={24} color={theme.colors.text} />
           <View style={styles.titleTextWrap}>
             <Text
               numberOfLines={1}
@@ -115,19 +118,35 @@ export default function ActivityTracker({
             </Text>
           </View>
         </View>
-        <Button
-          icon={
-            <Ionicons
-              name="checkmark-outline"
-              size={16}
-              color={theme.colors.text}
+        <View style={styles.titleActionCluster}>
+          {headerActions?.map((action) => (
+            <Button
+              key={action.key}
+              variant={action.variant ?? 'outline'}
+              color={color}
+              icon={action.icon}
+              onPress={action.onPress}
+              accessibilityLabel={action.accessibilityLabel}
+              style={styles.toolbarIconButton}
             />
-          }
-          style={{
-            backgroundColor: color,
-          }}
-          onPress={handleAddCompletion}
-        />
+          ))}
+          <Button
+            variant={todayCompleted ? 'primary' : 'outline'}
+            icon={
+              <Ionicons
+                name="checkmark-outline"
+                size={16}
+                color={todayCompleted ? theme.colors.text : color}
+              />
+            }
+            color={color}
+            onPress={handleAddCompletion}
+            accessibilityLabel={
+              todayCompleted ? 'Completed today' : 'Mark today complete'
+            }
+            style={styles.toolbarIconButton}
+          />
+        </View>
       </View>
       <View
         style={[styles.gridWrap, { backgroundColor: theme.colors.surface }]}
@@ -208,6 +227,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  titleActionCluster: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexShrink: 0,
+  },
+  toolbarIconButton: {
+    width: 50,
+    height: 50,
+    padding: 0,
+    borderRadius: 16,
   },
   outerWrap: {
     overflow: 'visible',
