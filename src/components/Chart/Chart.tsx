@@ -66,6 +66,7 @@ export default function Chart({
   formatYLabel,
   yScale = 'count',
   entranceDelayMs = 0,
+  useDataSetLineColors = false,
 }: ChartProps) {
   const theme = useEzuiTheme();
   const [chartWidth, setChartWidth] = useState(0);
@@ -162,12 +163,16 @@ export default function Chart({
               initialSpacing={INITIAL_SPACING}
               endSpacing={END_SPACING}
               spacing={spacing}
-              color1={lineColor}
-              color2={lineColor}
-              startFillColor1={fillStart}
-              startFillColor2={fillStart}
-              endFillColor1={fillEnd}
-              endFillColor2={fillEnd}
+              {...(useDataSetLineColors
+                ? {}
+                : {
+                    color1: lineColor,
+                    color2: lineColor,
+                    startFillColor1: fillStart,
+                    startFillColor2: fillStart,
+                    endFillColor1: fillEnd,
+                    endFillColor2: fillEnd,
+                  })}
               startOpacity={startOpacity}
               endOpacity={endOpacity}
               noOfSections={noOfSections}

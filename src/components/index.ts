@@ -14,6 +14,7 @@ export * from './Card';
 export * from './Dropdown';
 export * from './Input';
 export * from './Login';
+export * from './MarkdownComposer';
 export * from './PriceCard';
 export * from './ScreenContainer';
 export * from './Tag';

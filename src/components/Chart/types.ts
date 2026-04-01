@@ -29,4 +29,5 @@ export type ChartProps = {
   formatYLabel?: (label: string) => string;
   yScale?: ChartYScale;
   entranceDelayMs?: number;
+  useDataSetLineColors?: boolean;
 };
