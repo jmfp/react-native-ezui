@@ -5,7 +5,7 @@ import type { LoginProps } from './types';
 import { Input } from '../Input';
 import { Button } from '../Button';
 import { useEzuiTheme } from '../../theme/ThemeContext';
-import springHabtHeader from '../../../../../../assets/images/SpringHabtHeader.png';
+import springHabitShortHeader from '../../../../../../assets/images/SpringHabitShortHeader.png';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -87,9 +87,10 @@ export default function Login({
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.surface }]}>
       <Image
-        source={springHabtHeader as ImageSource}
+        source={springHabitShortHeader as ImageSource}
         style={styles.logo}
         contentFit="contain"
+        accessibilityLabel="SpringHabt"
       />
       <Input
         placeholder="Email"
@@ -159,7 +160,9 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   logo: {
+    alignSelf: 'center',
     width: '100%',
-    aspectRatio: 16 / 9,
+    maxWidth: 280,
+    height: 44,
   },
 });
