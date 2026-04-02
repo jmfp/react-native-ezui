@@ -1,4 +1,6 @@
-export const ENABLE_HABIT_SCREENSHOT_MOCKS = true;
+const raw = process.env.EXPO_PUBLIC_SCREENSHOT_MOCKS?.trim().toLowerCase();
+export const ENABLE_HABIT_SCREENSHOT_MOCKS =
+  raw !== "0" && raw !== "false" && raw !== "off";
 
 const MOCK_MIN_COMPLETION_PERCENT = 72;
 
