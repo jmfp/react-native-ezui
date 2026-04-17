@@ -1,8 +1,8 @@
-import { Text, StyleSheet, Pressable, View, FlatList } from 'react-native';
+import { Text, StyleSheet, Pressable, View } from 'react-native';
 import type { PriceCardProps } from './types';
 import { useEzuiTheme } from '../../theme/ThemeContext';
 import { Image, type ImageSource } from 'expo-image';
-import SpringHabtHeader from '../../../../../../assets/images/SpringHabtHeader.png';
+import SpringHabitShortHeader from '../../../../../../assets/images/SpringHabitShortHeader.png';
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../Button';
@@ -22,8 +22,10 @@ export default function PriceCard({
       style={[styles.card, { backgroundColor: theme.colors.surface }, style]}
     >
       <Image
-        source={SpringHabtHeader as ImageSource}
+        source={SpringHabitShortHeader as ImageSource}
         style={styles.image}
+        contentFit="contain"
+        accessibilityLabel="SpringHabt"
       />
       <Text
         style={[styles.text, { color: theme.colors.text }]}
@@ -35,14 +37,12 @@ export default function PriceCard({
       </Pressable>
       {showMore && (
         <>
-          <FlatList
-            data={features ?? []}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            keyExtractor={(item, index) => `${item.title}-${index}`}
-            contentContainerStyle={styles.features}
-            renderItem={({ item }) => (
-              <View style={[styles.feature, { borderColor: item.color }]}>
+          <View style={styles.features}>
+            {(features ?? []).map((item, index) => (
+              <View
+                key={`${item.title}-${index}`}
+                style={[styles.feature, { borderColor: item.color }]}
+              >
                 <Ionicons name={item.icon} size={24} color={item.color} />
                 <Text
                   style={[styles.featureText, { color: theme.colors.text }]}
@@ -50,8 +50,8 @@ export default function PriceCard({
                   {item.title}
                 </Text>
               </View>
-            )}
-          />
+            ))}
+          </View>
           <Button label={ctaText ?? 'Subscribe'} onPress={onPress} />
         </>
       )}
@@ -76,16 +76,13 @@ const styles = StyleSheet.create({
   },
   image: {
     width: '100%',
-    height: 200,
-    resizeMode: 'contain',
+    height: 160,
   },
   features: {
     gap: 16,
     width: '100%',
     paddingVertical: 8,
-    flexDirection: 'column',
-    alignItems: 'center',
-    textAlign: 'center',
+    alignSelf: 'stretch',
   },
   feature: {
     width: '100%',
