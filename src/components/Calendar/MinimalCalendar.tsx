@@ -21,14 +21,32 @@ function toCalendarMonthId(month: string): string {
   return month;
 }
 
+function dotOutlineStyle(accent: string) {
+  return {
+    backgroundColor: 'transparent' as const,
+    borderWidth: 2,
+    borderColor: accent,
+  };
+}
+
+function dotFilledStyle(accent: string) {
+  return {
+    backgroundColor: accent,
+    borderWidth: 0,
+    borderColor: 'transparent' as const,
+  };
+}
+
 export default function MinimalCalendar({
   datesWithEvents = [],
   month = '',
   dotsVerticalSpacing = DEFAULT_DOTS_VERTICAL_SPACING,
   onPress,
   summaryCaption,
+  accentColor,
 }: MinimalCalendarProps) {
   const theme = useEzuiTheme();
+  const accent = accentColor ?? theme.colors.text;
   const todayId = useMemo(() => toDateId(new Date()), []);
   const activeRanges = useMemo(
     () => [{ startId: todayId, endId: todayId }],
@@ -106,43 +124,45 @@ export default function MinimalCalendar({
         }),
         idle: (params: { id: string }) => ({
           container: {
-            backgroundColor: eventDateIds.has(params.id)
-              ? theme.colors.text
-              : theme.colors.textMuted || theme.colors.text,
-            opacity: eventDateIds.has(params.id) ? 1 : 0.6,
+            ...(eventDateIds.has(params.id)
+              ? dotFilledStyle(accent)
+              : dotOutlineStyle(accent)),
+            opacity: eventDateIds.has(params.id) ? 1 : 0.88,
           },
           content: {},
         }),
         today: (params: { id: string }) => ({
           container: {
-            backgroundColor: eventDateIds.has(params.id)
-              ? theme.colors.text
-              : theme.colors.primary,
+            ...(eventDateIds.has(params.id)
+              ? dotFilledStyle(accent)
+              : dotOutlineStyle(accent)),
             opacity: 1,
           },
           content: {},
         }),
         active: (params: { id: string }) => ({
           container: {
-            backgroundColor: eventDateIds.has(params.id)
-              ? theme.colors.text
-              : theme.colors.primary,
+            ...(eventDateIds.has(params.id)
+              ? dotFilledStyle(accent)
+              : dotOutlineStyle(accent)),
             opacity: 1,
           },
           content: {},
         }),
         disabled: (params: { id: string }) => ({
           container: {
-            backgroundColor: eventDateIds.has(params.id)
-              ? theme.colors.text
-              : theme.colors.textMuted || theme.colors.text,
-            opacity: eventDateIds.has(params.id) ? 0.6 : 0.25,
+            ...(eventDateIds.has(params.id)
+              ? { ...dotFilledStyle(accent), opacity: 0.55 }
+              : {
+                  ...dotOutlineStyle(accent),
+                  opacity: 0.28,
+                }),
           },
           content: {},
         }),
       },
     }),
-    [theme, eventDateIds]
+    [theme, eventDateIds, accent]
   );
   return (
     <Pressable
@@ -161,12 +181,12 @@ export default function MinimalCalendar({
             <Ionicons
               name="calendar-outline"
               size={24}
-              color={theme.colors.text}
+              color={accent}
             />
             <Text
               style={[
                 styles.monthTotalEventsText,
-                { color: theme.colors.text },
+                { color: accent },
               ]}
             >
               {summaryCaption ??
@@ -174,12 +194,12 @@ export default function MinimalCalendar({
             </Text>
           </View>
           <View style={styles.monthName}>
-            <Text style={[styles.monthNameText, { color: theme.colors.text }]}>
+            <Text style={[styles.monthNameText, { color: accent }]}>
               {monthLabel}
             </Text>
           </View>
           <Text
-            style={[styles.monthTotalEventsText, { color: theme.colors.text }]}
+            style={[styles.monthTotalEventsText, { color: accent }]}
           >{`${yearLabel}`}</Text>
         </View>
         <View

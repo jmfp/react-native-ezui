@@ -17,10 +17,12 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-function getGridDates(days: number): { date: Date; key: string }[] {
+type GridCell = { date: Date | null; key: string };
+
+function getGridDates(days: number): GridCell[] {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const cells: { date: Date; key: string }[] = [];
+  const cells: GridCell[] = [];
   const count = Math.max(1, Math.floor(days));
   for (let i = count - 1; i >= 0; i--) {
     const d = new Date(today);
@@ -44,7 +46,6 @@ function normalizeDate(d: Date | string): Date {
   return typeof d === 'string' ? new Date(d) : d;
 }
 
-let COLS = 40;
 const GAP = 2;
 
 export default function ActivityTracker({
@@ -57,23 +58,31 @@ export default function ActivityTracker({
   onTitlePress,
   headerActions,
   completionNavigator,
+  hideCompletionControl = false,
+  padYearGridToFullRows = false,
 }: ActivityTrackerProps) {
   const theme = useEzuiTheme();
-  timeInterval == 'Month'
-    ? (COLS = 15)
-    : timeInterval == 'Week'
-      ? (COLS = 7)
-      : (COLS = 40);
-  const gridDays = useMemo(() => {
-    if (timeInterval === 'Week') return 7;
-    if (timeInterval === 'Month') return 30;
-    return 365;
+  const { numCols, gridDays, cellSize, cellBorderRadius } = useMemo(() => {
+    if (timeInterval === 'Week') {
+      return { numCols: 7, gridDays: 7, cellSize: 64, cellBorderRadius: 16 };
+    }
+    if (timeInterval === 'Month') {
+      return { numCols: 15, gridDays: 30, cellSize: 32, cellBorderRadius: 9 };
+    }
+    return { numCols: 40, gridDays: 365, cellSize: 8, cellBorderRadius: 3 };
   }, [timeInterval]);
-  let cellSize = timeInterval == 'Month' ? 32 : timeInterval == 'Week' ? 64 : 8;
-  let cellBorderRadius =
-    timeInterval == 'Month' ? 9 : timeInterval == 'Week' ? 16 : 3;
 
-  const gridCells = useMemo(() => getGridDates(gridDays), [gridDays]);
+  const gridCells = useMemo(() => {
+    const base = getGridDates(gridDays);
+    if (padYearGridToFullRows && timeInterval === 'Year') {
+      const cells = [...base];
+      while (cells.length % numCols !== 0) {
+        cells.push({ date: null, key: `pad-${cells.length}` });
+      }
+      return cells;
+    }
+    return base;
+  }, [gridDays, numCols, padYearGridToFullRows, timeInterval]);
 
   const completedSet = useMemo(() => {
     const set = new Set<string>();
@@ -89,6 +98,7 @@ export default function ActivityTracker({
     null
   );
   const handleAddCompletion = useCallback(() => {
+    if (!_onAddCompletion) return;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const key = toDayKey(today);
@@ -98,7 +108,6 @@ export default function ActivityTracker({
     setLocalAdded((prev) => new Set(prev).add(key));
     setNewlyCompletedKey(key);
     setTimeout(() => setNewlyCompletedKey(null), 30000);
-    // Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     _onAddCompletion(today);
   }, [_onAddCompletion, completedSet, localAdded]);
@@ -219,60 +228,62 @@ export default function ActivityTracker({
               style={styles.toolbarIconButton}
             />
           ))}
-          {completionNavigator ? (
-            <Button
-              variant="outline"
-              color={accent}
-              icon={
-                <Ionicons
-                  name="calendar-outline"
-                  size={18}
-                  color={accent}
-                />
-              }
-              onPress={completionNavigator.onPress}
-              accessibilityLabel={
-                completionNavigator.accessibilityLabel ??
-                'Open completion history'
-              }
-              style={styles.toolbarIconButton}
-            />
-          ) : (
-            <Pressable
-              onPress={handleAddCompletion}
-              onPressIn={onCompletionPressIn}
-              onPressOut={onCompletionPressOut}
-              accessibilityRole="button"
-              accessibilityLabel={
-                todayCompleted ? 'Completed today' : 'Mark today complete'
-              }
-              style={styles.toolbarIconButton}
-            >
-              <Animated.View
-                style={[
-                  styles.completionButtonFace,
-                  completionButtonStyle,
-                ]}
+          {!hideCompletionControl ? (
+            completionNavigator ? (
+              <Button
+                variant="outline"
+                color={accent}
+                icon={
+                  <Ionicons
+                    name="calendar-outline"
+                    size={18}
+                    color={accent}
+                  />
+                }
+                onPress={completionNavigator.onPress}
+                accessibilityLabel={
+                  completionNavigator.accessibilityLabel ??
+                  'Open completion history'
+                }
+                style={styles.toolbarIconButton}
+              />
+            ) : (
+              <Pressable
+                onPress={handleAddCompletion}
+                onPressIn={onCompletionPressIn}
+                onPressOut={onCompletionPressOut}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  todayCompleted ? 'Completed today' : 'Mark today complete'
+                }
+                style={styles.toolbarIconButton}
               >
-                <View style={styles.completionIconStack}>
-                  <Animated.View style={completionIconPrimaryStyle}>
-                    <Ionicons
-                      name="checkmark-outline"
-                      size={16}
-                      color={theme.colors.text}
-                    />
-                  </Animated.View>
-                  <Animated.View style={completionIconOutlineStyle}>
-                    <Ionicons
-                      name="checkmark-outline"
-                      size={16}
-                      color={accent}
-                    />
-                  </Animated.View>
-                </View>
-              </Animated.View>
-            </Pressable>
-          )}
+                <Animated.View
+                  style={[
+                    styles.completionButtonFace,
+                    completionButtonStyle,
+                  ]}
+                >
+                  <View style={styles.completionIconStack}>
+                    <Animated.View style={completionIconPrimaryStyle}>
+                      <Ionicons
+                        name="checkmark-outline"
+                        size={16}
+                        color={theme.colors.text}
+                      />
+                    </Animated.View>
+                    <Animated.View style={completionIconOutlineStyle}>
+                      <Ionicons
+                        name="checkmark-outline"
+                        size={16}
+                        color={accent}
+                      />
+                    </Animated.View>
+                  </View>
+                </Animated.View>
+              </Pressable>
+            )
+          ) : null}
         </View>
       </View>
       <View
@@ -280,21 +291,33 @@ export default function ActivityTracker({
       >
         <FlatList
           data={gridCells}
-          numColumns={COLS}
+          numColumns={numCols}
           scrollEnabled={false}
           keyExtractor={(item) => item.key}
           style={styles.flatList}
           contentContainerStyle={styles.container}
           columnWrapperStyle={styles.row}
-          renderItem={({ item }) => (
-            <ActivityCell
-              color={color}
-              completed={isCompleted(item.key)}
-              justCompleted={item.key === newlyCompletedKey}
-              cellSize={cellSize}
-              borderRadius={cellBorderRadius}
-            />
-          )}
+          renderItem={({ item }) =>
+            item.date ? (
+              <ActivityCell
+                color={color}
+                completed={isCompleted(item.key)}
+                justCompleted={item.key === newlyCompletedKey}
+                cellSize={cellSize}
+                borderRadius={cellBorderRadius}
+              />
+            ) : (
+              <View
+                style={{
+                  flex: 1,
+                  aspectRatio: 1,
+                  maxWidth: cellSize,
+                  maxHeight: cellSize,
+                  opacity: 0,
+                }}
+              />
+            )
+          }
         />
       </View>
     </View>

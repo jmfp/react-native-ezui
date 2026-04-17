@@ -68,6 +68,27 @@ export function MarkdownComposer({
     onChangeText(next);
   }, [onChangeText, value]);
 
+  const insertLink = useCallback(() => {
+    const { start, end } = selRef.current;
+    const selected = value.slice(start, end) || "link text";
+    const insertion = `[${selected}](https://)`;
+    onChangeText(value.slice(0, start) + insertion + value.slice(end));
+  }, [onChangeText, value]);
+
+  const insertImage = useCallback(() => {
+    const { start, end } = selRef.current;
+    const insertion = "![caption](https://)";
+    onChangeText(value.slice(0, start) + insertion + value.slice(end));
+  }, [onChangeText, value]);
+
+  const insertCodeFence = useCallback(() => {
+    const { start, end } = selRef.current;
+    const selected = value.slice(start, end) || " ";
+    const fence = "```";
+    const insertion = `${fence}\n${selected}\n${fence}\n`;
+    onChangeText(value.slice(0, start) + insertion + value.slice(end));
+  }, [onChangeText, value]);
+
   const borderColor = error ? '#ef4444' : theme.colors.border;
 
   const composedInputStyle = StyleSheet.flatten([
@@ -126,6 +147,42 @@ export function MarkdownComposer({
           accessibilityLabel="Bullet list"
         >
           <Text style={[styles.toolLabel, { color: theme.colors.text }]}>•</Text>
+        </Pressable>
+        <Pressable
+          onPress={insertLink}
+          style={({ pressed }) => [
+            styles.toolBtn,
+            { borderColor: theme.colors.border },
+            pressed && styles.toolBtnPressed,
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel="Insert link"
+        >
+          <Text style={[styles.toolLabel, { color: theme.colors.text }]}>Link</Text>
+        </Pressable>
+        <Pressable
+          onPress={insertImage}
+          style={({ pressed }) => [
+            styles.toolBtn,
+            { borderColor: theme.colors.border },
+            pressed && styles.toolBtnPressed,
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel="Insert image"
+        >
+          <Text style={[styles.toolLabel, { color: theme.colors.text }]}>Img</Text>
+        </Pressable>
+        <Pressable
+          onPress={insertCodeFence}
+          style={({ pressed }) => [
+            styles.toolBtn,
+            { borderColor: theme.colors.border },
+            pressed && styles.toolBtnPressed,
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel="Insert code block"
+        >
+          <Text style={[styles.toolLabel, { color: theme.colors.text }]}>{'{}'}</Text>
         </Pressable>
       </View>
       <TextInput

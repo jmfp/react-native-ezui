@@ -17,13 +17,15 @@ export type ActivityTrackerProps = {
   name: string;
   description: string;
   dates: Array<Date | string>;
-  onAddCompletion: (date: Date) => void;
+  onAddCompletion?: (date: Date) => void;
   color: string;
   icon: string;
   timeInterval?: 'Week' | 'Month' | 'Year';
   onTitlePress?: () => void;
   headerActions?: ActivityTrackerHeaderAction[];
   completionNavigator?: ActivityTrackerCompletionNavigator;
+  hideCompletionControl?: boolean;
+  padYearGridToFullRows?: boolean;
 };
 
 export type ActivityCellProps = {
