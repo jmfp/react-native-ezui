@@ -8,6 +8,11 @@ export type ActivityTrackerHeaderAction = {
   variant?: 'outline' | 'primary';
 };
 
+export type ActivityTrackerCompletionNavigator = {
+  onPress: () => void;
+  accessibilityLabel?: string;
+};
+
 export type ActivityTrackerProps = {
   name: string;
   description: string;
@@ -18,6 +23,7 @@ export type ActivityTrackerProps = {
   timeInterval?: 'Week' | 'Month' | 'Year';
   onTitlePress?: () => void;
   headerActions?: ActivityTrackerHeaderAction[];
+  completionNavigator?: ActivityTrackerCompletionNavigator;
 };
 
 export type ActivityCellProps = {

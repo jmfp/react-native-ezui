@@ -26,6 +26,7 @@ export default function MinimalCalendar({
   month = '',
   dotsVerticalSpacing = DEFAULT_DOTS_VERTICAL_SPACING,
   onPress,
+  summaryCaption,
 }: MinimalCalendarProps) {
   const theme = useEzuiTheme();
   const todayId = useMemo(() => toDateId(new Date()), []);
@@ -168,7 +169,8 @@ export default function MinimalCalendar({
                 { color: theme.colors.text },
               ]}
             >
-              {`${datesWithEvents.length} Total Events`}
+              {summaryCaption ??
+                `${datesWithEvents.length} Total Events`}
             </Text>
           </View>
           <View style={styles.monthName}>

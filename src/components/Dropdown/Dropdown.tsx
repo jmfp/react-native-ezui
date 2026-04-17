@@ -1,5 +1,6 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import type { DropdownProps } from './types';
 import { Input } from '../Input';
 import { useEzuiTheme } from '../../theme/ThemeContext';
@@ -9,6 +10,7 @@ export default function Dropdown({
   value,
   onChange,
   onOpenChange,
+  placeholder = 'Select an option',
   style,
 }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,15 +23,27 @@ export default function Dropdown({
     onOpenChange?.(next);
   };
   return (
-    <Pressable onPress={toggle} style={style}>
-      <View pointerEvents="none">
-        <Input
-          placeholder="Select an option"
-          value={displayValue}
-          onChangeText={() => {}}
-          editable={false}
-          style={style}
-        />
+    <Pressable onPress={toggle} style={[styles.outer, style]}>
+      <View style={styles.triggerRow}>
+        <View style={styles.inputFlex} pointerEvents="none">
+          <Input
+            placeholder={placeholder}
+            value={displayValue}
+            onChangeText={() => {}}
+            editable={false}
+            style={style}
+          />
+        </View>
+        <View style={styles.chevronWrap} pointerEvents="none">
+          <Ionicons
+            name="chevron-down"
+            size={22}
+            color={theme.colors.textMuted}
+            style={{
+              transform: [{ rotate: isOpen ? '180deg' : '0deg' }],
+            }}
+          />
+        </View>
       </View>
       {isOpen && (
         <ScrollView
@@ -56,8 +70,28 @@ export default function Dropdown({
 }
 
 const styles = StyleSheet.create({
+  outer: {
+    width: '100%',
+  },
+  triggerRow: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  inputFlex: {
+    flex: 1,
+    minWidth: 0,
+  },
+  chevronWrap: {
+    marginLeft: 8,
+    paddingVertical: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   options: {
     maxHeight: 200,
+    marginTop: 16,
+    borderRadius: 16,
   },
   option: {
     padding: 16,

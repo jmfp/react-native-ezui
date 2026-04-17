@@ -56,6 +56,7 @@ export default function ActivityTracker({
   timeInterval = 'Year',
   onTitlePress,
   headerActions,
+  completionNavigator,
 }: ActivityTrackerProps) {
   const theme = useEzuiTheme();
   timeInterval == 'Month'
@@ -218,40 +219,60 @@ export default function ActivityTracker({
               style={styles.toolbarIconButton}
             />
           ))}
-          <Pressable
-            onPress={handleAddCompletion}
-            onPressIn={onCompletionPressIn}
-            onPressOut={onCompletionPressOut}
-            accessibilityRole="button"
-            accessibilityLabel={
-              todayCompleted ? 'Completed today' : 'Mark today complete'
-            }
-            style={styles.toolbarIconButton}
-          >
-            <Animated.View
-              style={[
-                styles.completionButtonFace,
-                completionButtonStyle,
-              ]}
+          {completionNavigator ? (
+            <Button
+              variant="outline"
+              color={accent}
+              icon={
+                <Ionicons
+                  name="calendar-outline"
+                  size={18}
+                  color={accent}
+                />
+              }
+              onPress={completionNavigator.onPress}
+              accessibilityLabel={
+                completionNavigator.accessibilityLabel ??
+                'Open completion history'
+              }
+              style={styles.toolbarIconButton}
+            />
+          ) : (
+            <Pressable
+              onPress={handleAddCompletion}
+              onPressIn={onCompletionPressIn}
+              onPressOut={onCompletionPressOut}
+              accessibilityRole="button"
+              accessibilityLabel={
+                todayCompleted ? 'Completed today' : 'Mark today complete'
+              }
+              style={styles.toolbarIconButton}
             >
-              <View style={styles.completionIconStack}>
-                <Animated.View style={completionIconPrimaryStyle}>
-                  <Ionicons
-                    name="checkmark-outline"
-                    size={16}
-                    color={theme.colors.text}
-                  />
-                </Animated.View>
-                <Animated.View style={completionIconOutlineStyle}>
-                  <Ionicons
-                    name="checkmark-outline"
-                    size={16}
-                    color={accent}
-                  />
-                </Animated.View>
-              </View>
-            </Animated.View>
-          </Pressable>
+              <Animated.View
+                style={[
+                  styles.completionButtonFace,
+                  completionButtonStyle,
+                ]}
+              >
+                <View style={styles.completionIconStack}>
+                  <Animated.View style={completionIconPrimaryStyle}>
+                    <Ionicons
+                      name="checkmark-outline"
+                      size={16}
+                      color={theme.colors.text}
+                    />
+                  </Animated.View>
+                  <Animated.View style={completionIconOutlineStyle}>
+                    <Ionicons
+                      name="checkmark-outline"
+                      size={16}
+                      color={accent}
+                    />
+                  </Animated.View>
+                </View>
+              </Animated.View>
+            </Pressable>
+          )}
         </View>
       </View>
       <View
