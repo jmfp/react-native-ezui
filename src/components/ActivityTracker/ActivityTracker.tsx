@@ -1,9 +1,17 @@
-import { FlatList, View, StyleSheet, Text, Pressable } from 'react-native';
+import {
+  FlatList,
+  View,
+  StyleSheet,
+  Text,
+  Pressable,
+  type LayoutChangeEvent,
+} from 'react-native';
 import type { ActivityTrackerProps } from './types';
 import { useEzuiTheme } from '../../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import ActivityCell from './ActivityCell';
+import ActivityTrackerConfetti from './ActivityTrackerConfetti';
 import { Button } from '../Button';
 import { HabitIcon } from '../HabitIcon';
 import * as Haptics from 'expo-haptics';
@@ -17,6 +25,9 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+
+const GOLD_FILL = 'rgba(201, 162, 39, 0.88)';
+const GOLD_GLOW = '#fbbf24';
 type GridCell = { date: Date | null; key: string };
 
 function getGridDates(days: number): GridCell[] {
@@ -97,6 +108,58 @@ export default function ActivityTracker({
   const [newlyCompletedKey, setNewlyCompletedKey] = useState<string | null>(
     null
   );
+  const [wrapLayout, setWrapLayout] = useState({ w: 0, h: 0 });
+  const [confettiBurstId, setConfettiBurstId] = useState(0);
+  const [confettiActive, setConfettiActive] = useState(false);
+  const prevGridFullRef = useRef<boolean | null>(null);
+  const fullProgress = useSharedValue(0);
+
+  const isCompleted = useCallback(
+    (key: string) => completedSet.has(key) || localAdded.has(key),
+    [completedSet, localAdded]
+  );
+
+  const dateCellKeys = useMemo(
+    () => gridCells.filter((c) => c.date).map((c) => c.key),
+    [gridCells]
+  );
+
+  const allGridComplete = useMemo(
+    () =>
+      dateCellKeys.length > 0 &&
+      dateCellKeys.every((key) => isCompleted(key)),
+    [dateCellKeys, isCompleted]
+  );
+
+  useEffect(() => {
+    fullProgress.value = withTiming(allGridComplete ? 1 : 0, {
+      duration: allGridComplete ? 480 : 620,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [allGridComplete, fullProgress]);
+
+  useEffect(() => {
+    const prev = prevGridFullRef.current;
+    if (prev === null) {
+      prevGridFullRef.current = allGridComplete;
+      return;
+    }
+    if (!prev && allGridComplete) {
+      void Haptics.notificationAsync(
+        Haptics.NotificationFeedbackType.Success
+      );
+      setConfettiBurstId((n) => n + 1);
+    }
+    prevGridFullRef.current = allGridComplete;
+  }, [allGridComplete]);
+
+  useEffect(() => {
+    if (confettiBurstId < 1) return;
+    setConfettiActive(true);
+    const t = setTimeout(() => setConfettiActive(false), 3200);
+    return () => clearTimeout(t);
+  }, [confettiBurstId]);
+
   const handleAddCompletion = useCallback(() => {
     if (!_onAddCompletion) return;
     const today = new Date();
@@ -105,17 +168,50 @@ export default function ActivityTracker({
     if (completedSet.has(key) || localAdded.has(key)) {
       return;
     }
+    const othersFull = dateCellKeys.every(
+      (k) => k === key || completedSet.has(k) || localAdded.has(k)
+    );
+    const fillsEntireGrid = othersFull;
     setLocalAdded((prev) => new Set(prev).add(key));
     setNewlyCompletedKey(key);
     setTimeout(() => setNewlyCompletedKey(null), 30000);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    if (!fillsEntireGrid) {
+      void Haptics.notificationAsync(
+        Haptics.NotificationFeedbackType.Success
+      );
+    }
     _onAddCompletion(today);
-  }, [_onAddCompletion, completedSet, localAdded]);
+  }, [
+    _onAddCompletion,
+    completedSet,
+    localAdded,
+    dateCellKeys,
+  ]);
 
-  const isCompleted = useCallback(
-    (key: string) => completedSet.has(key) || localAdded.has(key),
-    [completedSet, localAdded]
-  );
+  const goldOverlayStyle = useAnimatedStyle(() => ({
+    opacity: 0.52 * fullProgress.value,
+  }));
+
+  const trackerShellStyle = useAnimatedStyle(() => {
+    const p = fullProgress.value;
+    return {
+      shadowColor: GOLD_GLOW,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.12 + 0.62 * p,
+      shadowRadius: 4 + 22 * p,
+      elevation: p * 18,
+      borderRadius: 8,
+      borderWidth: p * 2.5,
+      borderColor: GOLD_GLOW,
+    };
+  });
+
+  const onWrapLayout = useCallback((e: LayoutChangeEvent) => {
+    const { width, height } = e.nativeEvent.layout;
+    setWrapLayout((prev) =>
+      prev.w === width && prev.h === height ? prev : { w: width, h: height }
+    );
+  }, []);
 
   const todayCompleted = useMemo(() => {
     const today = new Date();
@@ -202,7 +298,8 @@ export default function ActivityTracker({
   }));
 
   const body = (
-    <View style={styles.outerWrap}>
+    <View style={styles.outerWrap} onLayout={onWrapLayout}>
+      <Animated.View style={trackerShellStyle}>
       <View style={[styles.title, { backgroundColor: theme.colors.surface }]}>
         <View style={styles.activityInforSection}>
           <HabitIcon icon={icon} size={24} color={theme.colors.text} />
@@ -320,6 +417,26 @@ export default function ActivityTracker({
           }
         />
       </View>
+      </Animated.View>
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.goldFill,
+          { backgroundColor: GOLD_FILL },
+          goldOverlayStyle,
+        ]}
+      />
+      {confettiActive &&
+      confettiBurstId > 0 &&
+      wrapLayout.w > 12 &&
+      wrapLayout.h > 12 ? (
+        <ActivityTrackerConfetti
+          width={wrapLayout.w}
+          height={wrapLayout.h}
+          burstId={confettiBurstId}
+          accentColor={accent}
+        />
+      ) : null}
     </View>
   );
 
@@ -331,6 +448,11 @@ export default function ActivityTracker({
 }
 
 const styles = StyleSheet.create({
+  goldFill: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 8,
+    zIndex: 4,
+  },
   gridWrap: {
     width: '100%',
     padding: 8,
@@ -405,6 +527,8 @@ const styles = StyleSheet.create({
   },
   outerWrap: {
     overflow: 'visible',
+    position: 'relative',
+    borderRadius: 8,
   },
   dateContainer: {
     borderRadius: 2,
