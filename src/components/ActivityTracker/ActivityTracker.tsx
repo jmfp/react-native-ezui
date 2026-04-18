@@ -84,16 +84,21 @@ export default function ActivityTracker({
   }, [timeInterval]);
 
   const gridCells = useMemo(() => {
-    const base = getGridDates(gridDays);
-    if (padYearGridToFullRows && timeInterval === 'Year') {
-      const cells = [...base];
-      while (cells.length % numCols !== 0) {
-        cells.push({ date: null, key: `pad-${cells.length}` });
-      }
-      return cells;
+    if (timeInterval !== 'Year') {
+      return getGridDates(gridDays);
     }
-    return base;
-  }, [gridDays, numCols, padYearGridToFullRows, timeInterval]);
+    const base = getGridDates(gridDays);
+    if (!padYearGridToFullRows) {
+      return base;
+    }
+    const remainder = base.length % numCols;
+    const leadCount = remainder === 0 ? 0 : numCols - remainder;
+    const pads: GridCell[] = [];
+    for (let i = 0; i < leadCount; i += 1) {
+      pads.push({ date: null, key: `pre-pad-${i}` });
+    }
+    return [...pads, ...base];
+  }, [gridDays, numCols, timeInterval, padYearGridToFullRows]);
 
   const completedSet = useMemo(() => {
     const set = new Set<string>();
@@ -404,14 +409,12 @@ export default function ActivityTracker({
                 borderRadius={cellBorderRadius}
               />
             ) : (
-              <View
-                style={{
-                  flex: 1,
-                  aspectRatio: 1,
-                  maxWidth: cellSize,
-                  maxHeight: cellSize,
-                  opacity: 0,
-                }}
+              <ActivityCell
+                color={color}
+                completed={false}
+                justCompleted={false}
+                cellSize={cellSize}
+                borderRadius={cellBorderRadius}
               />
             )
           }

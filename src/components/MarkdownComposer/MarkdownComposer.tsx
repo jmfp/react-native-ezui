@@ -32,6 +32,33 @@ function insertLinePrefix(value: string, start: number, prefix: string) {
   return { next, cursor };
 }
 
+function lineStart(s: string, index: number): number {
+  return s.lastIndexOf('\n', index - 1) + 1;
+}
+
+function lineEnd(s: string, index: number): number {
+  const j = s.indexOf('\n', index);
+  return j === -1 ? s.length : j;
+}
+
+function singleNewlineInsert(prev: string, next: string): number | null {
+  if (next.length !== prev.length + 1) return null;
+  let i = 0;
+  while (i < prev.length && prev[i] === next[i]) i += 1;
+  if (next[i] !== '\n') return null;
+  if (next.slice(i + 1) !== prev.slice(i)) return null;
+  return i;
+}
+
+function cursorAfterStripDashPrefix(
+  dashPrefixStart: number,
+  start: number
+): number {
+  if (start <= dashPrefixStart) return start;
+  if (start < dashPrefixStart + 2) return dashPrefixStart;
+  return start - 2;
+}
+
 export function MarkdownComposer({
   value,
   onChangeText,
@@ -46,12 +73,21 @@ export function MarkdownComposer({
 }: MarkdownComposerProps) {
   const theme = useEzuiTheme();
   const selRef = useRef({ start: 0, end: 0 });
+  const inputRef = useRef<TextInput>(null);
 
   const onSelectionChange: NonNullable<
-    TextInputProps["onSelectionChange"]
+    TextInputProps['onSelectionChange']
   > = (e) => {
     selRef.current = e.nativeEvent.selection;
   };
+
+  const applySelection = useCallback((start: number, end: number) => {
+    requestAnimationFrame(() => {
+      inputRef.current?.setNativeProps({
+        selection: { start, end },
+      });
+    });
+  }, []);
 
   const wrapSelection = useCallback(
     (wrap: string) => {
@@ -62,30 +98,75 @@ export function MarkdownComposer({
     [onChangeText, value]
   );
 
-  const bulletLine = useCallback(() => {
+  const toggleBulletLine = useCallback(() => {
     const { start } = selRef.current;
-    const { next } = insertLinePrefix(value, start, '- ');
-    onChangeText(next);
-  }, [onChangeText, value]);
+    const ls = lineStart(value, start);
+    const le = lineEnd(value, start);
+    const line = value.slice(ls, le);
+    const m = line.match(/^(\s*)([\s\S]*)$/);
+    const lw = m?.[1] ?? '';
+    const rest = m?.[2] ?? line;
+    if (/^-\s/.test(rest)) {
+      const stripped = lw + rest.replace(/^-\s/, '');
+      const next = value.slice(0, ls) + stripped + value.slice(le);
+      onChangeText(next);
+      const newPos = cursorAfterStripDashPrefix(ls + lw.length, start);
+      applySelection(newPos, newPos);
+    } else {
+      const { next, cursor } = insertLinePrefix(value, start, '- ');
+      onChangeText(next);
+      applySelection(cursor, cursor);
+    }
+  }, [applySelection, onChangeText, value]);
+
+  const handleChangeText = useCallback(
+    (next: string) => {
+      const prev = value;
+      let transformed = next;
+      const ins = singleNewlineInsert(prev, next);
+      if (ins !== null) {
+        const ls = lineStart(prev, ins);
+        const le = lineEnd(prev, ins);
+        const afterC = prev.slice(ins, le);
+        if (afterC !== '') {
+          onChangeText(transformed);
+          return;
+        }
+        const lineSlice = prev.slice(ls, le);
+        if (/^\s*-\s*$/.test(lineSlice) && ins === le) {
+          transformed = prev.slice(0, ls) + '\n' + prev.slice(le);
+          onChangeText(transformed);
+          return;
+        }
+        if (/^\s*-\s+\S/.test(lineSlice) && ins === le) {
+          transformed = prev.slice(0, ins) + '\n- ' + prev.slice(ins);
+          onChangeText(transformed);
+          return;
+        }
+      }
+      onChangeText(transformed);
+    },
+    [onChangeText, value]
+  );
 
   const insertLink = useCallback(() => {
     const { start, end } = selRef.current;
-    const selected = value.slice(start, end) || "link text";
+    const selected = value.slice(start, end) || 'link text';
     const insertion = `[${selected}](https://)`;
     onChangeText(value.slice(0, start) + insertion + value.slice(end));
   }, [onChangeText, value]);
 
   const insertImage = useCallback(() => {
     const { start, end } = selRef.current;
-    const insertion = "![caption](https://)";
+    const insertion = '![caption](https://)';
     onChangeText(value.slice(0, start) + insertion + value.slice(end));
   }, [onChangeText, value]);
 
   const insertCodeFence = useCallback(() => {
     const { start, end } = selRef.current;
-    const selected = value.slice(start, end) || " ";
-    const fence = "```";
-    const insertion = `${fence}\n${selected}\n${fence}\n`;
+    const selected = value.slice(start, end) || ' ';
+    const fence = '```text';
+    const insertion = `${fence}\n${selected}\n\`\`\`\n`;
     onChangeText(value.slice(0, start) + insertion + value.slice(end));
   }, [onChangeText, value]);
 
@@ -137,7 +218,7 @@ export function MarkdownComposer({
           </Text>
         </Pressable>
         <Pressable
-          onPress={bulletLine}
+          onPress={toggleBulletLine}
           style={({ pressed }) => [
             styles.toolBtn,
             { borderColor: theme.colors.border },
@@ -186,16 +267,22 @@ export function MarkdownComposer({
         </Pressable>
       </View>
       <TextInput
+        ref={inputRef}
         editable={editable}
         multiline
         placeholder={placeholder}
         placeholderTextColor={theme.colors.textMuted}
         value={value}
-        onChangeText={onChangeText}
+        onChangeText={handleChangeText}
         onSelectionChange={onSelectionChange}
         maxLength={maxLength}
         style={composedInputStyle}
         selectionColor={theme.colors.primary}
+        autoCorrect={false}
+        spellCheck={false}
+        autoComplete="off"
+        textContentType="none"
+        importantForAutofill="no"
       />
       {error ? (
         <Text style={[styles.fieldError, errorStyle]} accessibilityRole="alert">

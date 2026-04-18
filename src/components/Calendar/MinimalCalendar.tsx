@@ -127,7 +127,7 @@ export default function MinimalCalendar({
             ...(eventDateIds.has(params.id)
               ? dotFilledStyle(accent)
               : dotOutlineStyle(accent)),
-            opacity: eventDateIds.has(params.id) ? 1 : 0.88,
+            opacity: 1,
           },
           content: {},
         }),
@@ -152,10 +152,10 @@ export default function MinimalCalendar({
         disabled: (params: { id: string }) => ({
           container: {
             ...(eventDateIds.has(params.id)
-              ? { ...dotFilledStyle(accent), opacity: 0.55 }
+              ? { ...dotFilledStyle(accent), opacity: 1 }
               : {
                   ...dotOutlineStyle(accent),
-                  opacity: 0.28,
+                  opacity: 0.4,
                 }),
           },
           content: {},
