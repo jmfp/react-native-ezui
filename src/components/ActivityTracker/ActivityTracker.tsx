@@ -75,7 +75,6 @@ export default function ActivityTracker({
   completionNavigator,
   hideCompletionControl = false,
   padYearGridToFullRows = false,
-  prefillAllExceptToday = false,
 }: ActivityTrackerProps) {
   const theme = useEzuiTheme();
   const { numCols, gridDays, cellSize, cellBorderRadius } = useMemo(() => {
@@ -119,26 +118,6 @@ export default function ActivityTracker({
     [gridCells],
   );
 
-  const effectiveCompletedSet = useMemo(() => {
-    const set = new Set(completedSet);
-    if (
-      prefillAllExceptToday &&
-      typeof __DEV__ !== "undefined" &&
-      __DEV__ &&
-      dateCellKeys.length > 0
-    ) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const todayKey = toDayKey(today);
-      for (const key of dateCellKeys) {
-        if (key !== todayKey) {
-          set.add(key);
-        }
-      }
-    }
-    return set;
-  }, [completedSet, dateCellKeys, prefillAllExceptToday]);
-
   const [localAdded, setLocalAdded] = useState<Set<string>>(new Set());
   const [newlyCompletedKey, setNewlyCompletedKey] = useState<string | null>(
     null
@@ -150,9 +129,8 @@ export default function ActivityTracker({
   const fullProgress = useSharedValue(0);
 
   const isCompleted = useCallback(
-    (key: string) =>
-      effectiveCompletedSet.has(key) || localAdded.has(key),
-    [effectiveCompletedSet, localAdded]
+    (key: string) => completedSet.has(key) || localAdded.has(key),
+    [completedSet, localAdded],
   );
 
   const allGridComplete = useMemo(
@@ -202,12 +180,11 @@ export default function ActivityTracker({
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const key = toDayKey(today);
-    if (effectiveCompletedSet.has(key) || localAdded.has(key)) {
+    if (completedSet.has(key) || localAdded.has(key)) {
       return;
     }
     const othersFull = dateCellKeys.every(
-      (k) =>
-        k === key || effectiveCompletedSet.has(k) || localAdded.has(k)
+      (k) => k === key || completedSet.has(k) || localAdded.has(k),
     );
     const fillsEntireGrid = othersFull;
     setLocalAdded((prev) => new Set(prev).add(key));
@@ -221,7 +198,7 @@ export default function ActivityTracker({
     _onAddCompletion(today);
   }, [
     _onAddCompletion,
-    effectiveCompletedSet,
+    completedSet,
     localAdded,
     dateCellKeys,
   ]);
