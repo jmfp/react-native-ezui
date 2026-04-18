@@ -26,6 +26,7 @@ export type ActivityTrackerProps = {
   completionNavigator?: ActivityTrackerCompletionNavigator;
   hideCompletionControl?: boolean;
   padYearGridToFullRows?: boolean;
+  prefillAllExceptToday?: boolean;
 };
 
 export type ActivityCellProps = {

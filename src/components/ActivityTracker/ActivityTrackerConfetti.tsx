@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
@@ -46,7 +46,7 @@ function buildPieces(
   accent: string
 ): PieceConfig[] {
   const rand = mulberry32(((burstId * 7919) ^ (width << 2) ^ (height << 1)) >>> 0);
-  const count = 42;
+  const count = 28;
   const pieces: PieceConfig[] = [];
   for (let i = 0; i < count; i++) {
     pieces.push({
@@ -55,8 +55,8 @@ function buildPieces(
       drift: (rand() - 0.5) * (width * 0.45),
       fall: height + 80 + rand() * 120,
       rotateTo: (rand() - 0.5) * 10,
-      w: 5 + rand() * 6,
-      h: 7 + rand() * 9,
+      w: 6 + rand() * 7,
+      h: 8 + rand() * 10,
       color:
         rand() < 0.32
           ? accent
@@ -68,7 +68,7 @@ function buildPieces(
   return pieces;
 }
 
-function ConfettiPiece({ cfg }: { cfg: PieceConfig }) {
+const ConfettiPiece = memo(function ConfettiPiece({ cfg }: { cfg: PieceConfig }) {
   const p = useSharedValue(0);
 
   useEffect(() => {
@@ -110,7 +110,7 @@ function ConfettiPiece({ cfg }: { cfg: PieceConfig }) {
       ]}
     />
   );
-}
+});
 
 type Props = {
   width: number;

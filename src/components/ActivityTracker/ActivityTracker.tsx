@@ -12,6 +12,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import ActivityCell from './ActivityCell';
 import ActivityTrackerConfetti from './ActivityTrackerConfetti';
+import {
+  nextConfettiStaggerDelayMs,
+  tryCelebrationHaptic,
+} from './confettiStagger';
 import { Button } from '../Button';
 import { HabitIcon } from '../HabitIcon';
 import * as Haptics from 'expo-haptics';
@@ -71,6 +75,7 @@ export default function ActivityTracker({
   completionNavigator,
   hideCompletionControl = false,
   padYearGridToFullRows = false,
+  prefillAllExceptToday = false,
 }: ActivityTrackerProps) {
   const theme = useEzuiTheme();
   const { numCols, gridDays, cellSize, cellBorderRadius } = useMemo(() => {
@@ -109,6 +114,31 @@ export default function ActivityTracker({
     return set;
   }, [dates]);
 
+  const dateCellKeys = useMemo(
+    () => gridCells.filter((c) => c.date).map((c) => c.key),
+    [gridCells],
+  );
+
+  const effectiveCompletedSet = useMemo(() => {
+    const set = new Set(completedSet);
+    if (
+      prefillAllExceptToday &&
+      typeof __DEV__ !== "undefined" &&
+      __DEV__ &&
+      dateCellKeys.length > 0
+    ) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayKey = toDayKey(today);
+      for (const key of dateCellKeys) {
+        if (key !== todayKey) {
+          set.add(key);
+        }
+      }
+    }
+    return set;
+  }, [completedSet, dateCellKeys, prefillAllExceptToday]);
+
   const [localAdded, setLocalAdded] = useState<Set<string>>(new Set());
   const [newlyCompletedKey, setNewlyCompletedKey] = useState<string | null>(
     null
@@ -120,13 +150,9 @@ export default function ActivityTracker({
   const fullProgress = useSharedValue(0);
 
   const isCompleted = useCallback(
-    (key: string) => completedSet.has(key) || localAdded.has(key),
-    [completedSet, localAdded]
-  );
-
-  const dateCellKeys = useMemo(
-    () => gridCells.filter((c) => c.date).map((c) => c.key),
-    [gridCells]
+    (key: string) =>
+      effectiveCompletedSet.has(key) || localAdded.has(key),
+    [effectiveCompletedSet, localAdded]
   );
 
   const allGridComplete = useMemo(
@@ -147,21 +173,27 @@ export default function ActivityTracker({
     const prev = prevGridFullRef.current;
     if (prev === null) {
       prevGridFullRef.current = allGridComplete;
-      return;
+      return undefined;
     }
     if (!prev && allGridComplete) {
-      void Haptics.notificationAsync(
-        Haptics.NotificationFeedbackType.Success
+      tryCelebrationHaptic(() =>
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       );
-      setConfettiBurstId((n) => n + 1);
+      const delay = nextConfettiStaggerDelayMs();
+      const t = setTimeout(() => {
+        setConfettiBurstId((n) => n + 1);
+      }, delay);
+      prevGridFullRef.current = allGridComplete;
+      return () => clearTimeout(t);
     }
     prevGridFullRef.current = allGridComplete;
+    return undefined;
   }, [allGridComplete]);
 
   useEffect(() => {
     if (confettiBurstId < 1) return;
     setConfettiActive(true);
-    const t = setTimeout(() => setConfettiActive(false), 3200);
+    const t = setTimeout(() => setConfettiActive(false), 3000);
     return () => clearTimeout(t);
   }, [confettiBurstId]);
 
@@ -170,11 +202,12 @@ export default function ActivityTracker({
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const key = toDayKey(today);
-    if (completedSet.has(key) || localAdded.has(key)) {
+    if (effectiveCompletedSet.has(key) || localAdded.has(key)) {
       return;
     }
     const othersFull = dateCellKeys.every(
-      (k) => k === key || completedSet.has(k) || localAdded.has(k)
+      (k) =>
+        k === key || effectiveCompletedSet.has(k) || localAdded.has(k)
     );
     const fillsEntireGrid = othersFull;
     setLocalAdded((prev) => new Set(prev).add(key));
@@ -188,7 +221,7 @@ export default function ActivityTracker({
     _onAddCompletion(today);
   }, [
     _onAddCompletion,
-    completedSet,
+    effectiveCompletedSet,
     localAdded,
     dateCellKeys,
   ]);
