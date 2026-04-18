@@ -30,4 +30,6 @@ export type ChartProps = {
   yScale?: ChartYScale;
   entranceDelayMs?: number;
   useDataSetLineColors?: boolean;
+  skipEntranceAnimation?: boolean;
+  chartAreaMinHeight?: number;
 };
