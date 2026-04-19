@@ -57,6 +57,13 @@ function toDayKey(d: Date): string {
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
 }
+
+function toCompletionDayKey(d: Date | string): string {
+  const date = typeof d === 'string' ? new Date(d) : d;
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toISOString().slice(0, 10);
+}
+
 function normalizeDate(d: Date | string): Date {
   return typeof d === 'string' ? new Date(d) : d;
 }
@@ -108,7 +115,10 @@ export default function ActivityTracker({
     const set = new Set<string>();
     for (const d of dates) {
       const date = normalizeDate(d);
-      if (!isNaN(date.getTime())) set.add(toDayKey(date));
+      if (!Number.isNaN(date.getTime())) {
+        const k = toCompletionDayKey(date);
+        if (k.length) set.add(k);
+      }
     }
     return set;
   }, [dates]);
