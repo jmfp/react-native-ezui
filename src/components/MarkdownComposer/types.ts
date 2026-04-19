@@ -16,4 +16,5 @@ export type MarkdownComposerProps = {
   renderMarkdownPreview?: (markdown: string) => ReactNode;
   livePreviewDebounceMs?: number;
   livePreviewMaxHeight?: number;
+  accentColor?: string;
 };

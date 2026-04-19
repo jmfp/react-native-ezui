@@ -75,6 +75,7 @@ export function MarkdownComposer({
   renderMarkdownPreview,
   livePreviewDebounceMs = 120,
   livePreviewMaxHeight = 320,
+  accentColor,
 }: MarkdownComposerProps) {
   const theme = useEzuiTheme();
   const selRef = useRef({ start: 0, end: 0 });
@@ -211,14 +212,16 @@ export function MarkdownComposer({
     onChangeText(value.slice(0, start) + insertion + value.slice(end));
   }, [onChangeText, value]);
 
-  const borderColor = error ? '#ef4444' : theme.colors.border;
+  const outlineColor = accentColor ?? theme.colors.border;
+  const selectionTint = accentColor ?? theme.colors.primary;
+  const inputBorderColor = error ? '#ef4444' : outlineColor;
 
   const composedInputStyle = StyleSheet.flatten([
     styles.input,
     {
       minHeight,
       backgroundColor: theme.colors.surface,
-      borderColor,
+      borderColor: inputBorderColor,
       color: theme.colors.text,
     },
     inputStyle,
@@ -231,7 +234,7 @@ export function MarkdownComposer({
           onPress={() => wrapSelection('**')}
           style={({ pressed }) => [
             styles.toolBtn,
-            { borderColor: theme.colors.border },
+            { borderColor: outlineColor },
             pressed && styles.toolBtnPressed,
           ]}
           accessibilityRole="button"
@@ -243,7 +246,7 @@ export function MarkdownComposer({
           onPress={() => wrapSelection('*')}
           style={({ pressed }) => [
             styles.toolBtn,
-            { borderColor: theme.colors.border },
+            { borderColor: outlineColor },
             pressed && styles.toolBtnPressed,
           ]}
           accessibilityRole="button"
@@ -262,7 +265,7 @@ export function MarkdownComposer({
           onPress={toggleBulletLine}
           style={({ pressed }) => [
             styles.toolBtn,
-            { borderColor: theme.colors.border },
+            { borderColor: outlineColor },
             pressed && styles.toolBtnPressed,
           ]}
           accessibilityRole="button"
@@ -274,7 +277,7 @@ export function MarkdownComposer({
           onPress={insertLink}
           style={({ pressed }) => [
             styles.toolBtn,
-            { borderColor: theme.colors.border },
+            { borderColor: outlineColor },
             pressed && styles.toolBtnPressed,
           ]}
           accessibilityRole="button"
@@ -287,7 +290,7 @@ export function MarkdownComposer({
           style={({ pressed }) => [
             styles.toolBtn,
             {
-              borderColor: theme.colors.border,
+              borderColor: outlineColor,
               backgroundColor: imageUrlOpen ? theme.colors.surface : undefined,
             },
             pressed && styles.toolBtnPressed,
@@ -301,7 +304,7 @@ export function MarkdownComposer({
           onPress={insertCodeFence}
           style={({ pressed }) => [
             styles.toolBtn,
-            { borderColor: theme.colors.border },
+            { borderColor: outlineColor },
             pressed && styles.toolBtnPressed,
           ]}
           accessibilityRole="button"
@@ -321,7 +324,7 @@ export function MarkdownComposer({
         onSelectionChange={onSelectionChange}
         maxLength={maxLength}
         style={composedInputStyle}
-        selectionColor={theme.colors.primary}
+        selectionColor={selectionTint}
         autoCorrect={false}
         spellCheck={false}
         autoComplete="off"
@@ -345,11 +348,11 @@ export function MarkdownComposer({
               styles.imageUrlInput,
               {
                 backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
+                borderColor: outlineColor,
                 color: theme.colors.text,
               },
             ]}
-            selectionColor={theme.colors.primary}
+            selectionColor={selectionTint}
             onSubmitEditing={() => applyImageFromUrlField()}
             returnKeyType="done"
           />
@@ -357,12 +360,12 @@ export function MarkdownComposer({
             onPress={() => applyImageFromUrlField()}
             style={({ pressed }) => [
               styles.imageUrlAddBtn,
-              { borderColor: theme.colors.border, opacity: pressed ? 0.75 : 1 },
+              { borderColor: outlineColor, opacity: pressed ? 0.75 : 1 },
             ]}
             accessibilityRole="button"
             accessibilityLabel="Insert image"
           >
-            <Text style={[styles.toolLabel, { color: theme.colors.primary }]}>
+            <Text style={[styles.toolLabel, { color: selectionTint }]}>
               Add
             </Text>
           </Pressable>
@@ -372,7 +375,7 @@ export function MarkdownComposer({
         <View
           style={[
             styles.previewSection,
-            { borderColor: theme.colors.border, backgroundColor: theme.colors.surface },
+            { borderColor: outlineColor, backgroundColor: theme.colors.surface },
           ]}
         >
           <Text style={[styles.previewLabel, { color: theme.colors.textMuted }]}>
