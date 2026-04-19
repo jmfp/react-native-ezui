@@ -1,6 +1,7 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -70,10 +71,28 @@ export function MarkdownComposer({
   inputStyle,
   error,
   errorStyle,
+  livePreview = false,
+  renderMarkdownPreview,
+  livePreviewDebounceMs = 120,
+  livePreviewMaxHeight = 320,
 }: MarkdownComposerProps) {
   const theme = useEzuiTheme();
   const selRef = useRef({ start: 0, end: 0 });
   const inputRef = useRef<TextInput>(null);
+  const imageUrlInputRef = useRef<TextInput>(null);
+  const [imageUrlOpen, setImageUrlOpen] = useState(false);
+  const [imageUrlDraft, setImageUrlDraft] = useState('');
+  const [previewMarkdown, setPreviewMarkdown] = useState(value);
+
+  useEffect(() => {
+    if (!livePreview) {
+      return;
+    }
+    const id = setTimeout(() => {
+      setPreviewMarkdown(value);
+    }, livePreviewDebounceMs);
+    return () => clearTimeout(id);
+  }, [value, livePreview, livePreviewDebounceMs]);
 
   const onSelectionChange: NonNullable<
     TextInputProps['onSelectionChange']
@@ -156,11 +175,33 @@ export function MarkdownComposer({
     onChangeText(value.slice(0, start) + insertion + value.slice(end));
   }, [onChangeText, value]);
 
-  const insertImage = useCallback(() => {
+  const toggleImageUrlField = useCallback(() => {
+    setImageUrlOpen((o) => {
+      const next = !o;
+      if (next) {
+        setImageUrlDraft('');
+        requestAnimationFrame(() => imageUrlInputRef.current?.focus());
+      }
+      return next;
+    });
+  }, []);
+
+  const applyImageFromUrlField = useCallback(() => {
+    const raw = imageUrlDraft.trim();
+    if (!raw) {
+      return;
+    }
+    const esc = raw.replace(/\)/g, '%29');
     const { start, end } = selRef.current;
-    const insertion = '![caption](https://)';
-    onChangeText(value.slice(0, start) + insertion + value.slice(end));
-  }, [onChangeText, value]);
+    const insertion = `![Image](${esc})`;
+    const next = value.slice(0, start) + insertion + value.slice(end);
+    onChangeText(next);
+    const pos = start + insertion.length;
+    applySelection(pos, pos);
+    setImageUrlDraft('');
+    setImageUrlOpen(false);
+    requestAnimationFrame(() => inputRef.current?.focus());
+  }, [applySelection, imageUrlDraft, onChangeText, value]);
 
   const insertCodeFence = useCallback(() => {
     const { start, end } = selRef.current;
@@ -242,14 +283,17 @@ export function MarkdownComposer({
           <Text style={[styles.toolLabel, { color: theme.colors.text }]}>Link</Text>
         </Pressable>
         <Pressable
-          onPress={insertImage}
+          onPress={toggleImageUrlField}
           style={({ pressed }) => [
             styles.toolBtn,
-            { borderColor: theme.colors.border },
+            {
+              borderColor: theme.colors.border,
+              backgroundColor: imageUrlOpen ? theme.colors.surface : undefined,
+            },
             pressed && styles.toolBtnPressed,
           ]}
           accessibilityRole="button"
-          accessibilityLabel="Insert image"
+          accessibilityLabel="Add image from URL"
         >
           <Text style={[styles.toolLabel, { color: theme.colors.text }]}>Img</Text>
         </Pressable>
@@ -284,6 +328,70 @@ export function MarkdownComposer({
         textContentType="none"
         importantForAutofill="no"
       />
+      {imageUrlOpen ? (
+        <View style={styles.imageUrlRow}>
+          <TextInput
+            ref={imageUrlInputRef}
+            editable={editable}
+            value={imageUrlDraft}
+            onChangeText={setImageUrlDraft}
+            placeholder="https://…"
+            placeholderTextColor={theme.colors.textMuted}
+            keyboardType="url"
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="off"
+            style={[
+              styles.imageUrlInput,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+                color: theme.colors.text,
+              },
+            ]}
+            selectionColor={theme.colors.primary}
+            onSubmitEditing={() => applyImageFromUrlField()}
+            returnKeyType="done"
+          />
+          <Pressable
+            onPress={() => applyImageFromUrlField()}
+            style={({ pressed }) => [
+              styles.imageUrlAddBtn,
+              { borderColor: theme.colors.border, opacity: pressed ? 0.75 : 1 },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Insert image"
+          >
+            <Text style={[styles.toolLabel, { color: theme.colors.primary }]}>
+              Add
+            </Text>
+          </Pressable>
+        </View>
+      ) : null}
+      {livePreview && renderMarkdownPreview ? (
+        <View
+          style={[
+            styles.previewSection,
+            { borderColor: theme.colors.border, backgroundColor: theme.colors.surface },
+          ]}
+        >
+          <Text style={[styles.previewLabel, { color: theme.colors.textMuted }]}>
+            Preview
+          </Text>
+          <ScrollView
+            nestedScrollEnabled
+            showsVerticalScrollIndicator
+            style={[styles.previewScroll, { maxHeight: livePreviewMaxHeight }]}
+            keyboardShouldPersistTaps="handled"
+          >
+            {renderMarkdownPreview(
+              previewMarkdown.trim()
+                ? previewMarkdown
+                : '_Start writing to see formatted text._',
+            )}
+          </ScrollView>
+        </View>
+      ) : null}
       {error ? (
         <Text style={[styles.fieldError, errorStyle]} accessibilityRole="alert">
           {error}
@@ -320,9 +428,45 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 16,
   },
+  imageUrlRow: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  imageUrlInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+  },
+  imageUrlAddBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
   fieldError: {
     fontSize: 12,
     marginLeft: 4,
     color: '#ef4444',
+  },
+  previewSection: {
+    width: '100%',
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 12,
+    gap: 8,
+  },
+  previewLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  previewScroll: {
+    width: '100%',
   },
 });
