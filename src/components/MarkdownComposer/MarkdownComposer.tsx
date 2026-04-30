@@ -1,5 +1,6 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -21,7 +22,8 @@ function insertAroundSelection(
   const inner = selected.length > 0 ? selected : '';
   const insertion = `${wrap}${inner}${wrap}`;
   const next = value.slice(0, start) + insertion + value.slice(end);
-  const cursor = start + wrap.length + inner.length + wrap.length;
+  const cursor =
+    inner.length > 0 ? start + wrap.length + inner.length + wrap.length : start + wrap.length;
   return { next, cursor };
 }
 
@@ -29,6 +31,28 @@ function insertLinePrefix(value: string, start: number, prefix: string) {
   const lineStart = value.lastIndexOf('\n', start - 1) + 1;
   const next = value.slice(0, lineStart) + prefix + value.slice(lineStart);
   const cursor = start + prefix.length;
+  return { next, cursor };
+}
+
+function insertCodeFence(
+  value: string,
+  start: number,
+  end: number,
+  lang: string
+): { next: string; cursor: number } {
+  const selected = value.slice(start, end);
+  const fenceOpen = lang.trim() ? `\`\`\`${lang.trim()}\n` : '```\n';
+  const fenceClose = '\n```';
+  const inner = selected.length > 0 ? selected : '';
+  const insertion =
+    inner.length > 0
+      ? `${fenceOpen}${inner}${fenceClose}`
+      : `${fenceOpen}${fenceClose}`;
+  const next = value.slice(0, start) + insertion + value.slice(end);
+  const cursor =
+    inner.length > 0
+      ? start + insertion.length
+      : start + fenceOpen.length;
   return { next, cursor };
 }
 
@@ -46,27 +70,53 @@ export function MarkdownComposer({
 }: MarkdownComposerProps) {
   const theme = useEzuiTheme();
   const selRef = useRef({ start: 0, end: 0 });
+  const inputRef = useRef<TextInput>(null);
+  const [selection, setSelection] = useState<{ start: number; end: number } | undefined>(
+    undefined
+  );
 
   const onSelectionChange: NonNullable<
-    TextInputProps["onSelectionChange"]
+    TextInputProps['onSelectionChange']
   > = (e) => {
     selRef.current = e.nativeEvent.selection;
+    setSelection(e.nativeEvent.selection);
   };
 
   const wrapSelection = useCallback(
     (wrap: string) => {
       const { start, end } = selRef.current;
-      const { next } = insertAroundSelection(value, start, end, wrap);
+      const { next, cursor } = insertAroundSelection(value, start, end, wrap);
       onChangeText(next);
+      const nextSelection = { start: cursor, end: cursor };
+      selRef.current = nextSelection;
+      setSelection(nextSelection);
+      inputRef.current?.focus();
     },
     [onChangeText, value]
   );
 
   const bulletLine = useCallback(() => {
     const { start } = selRef.current;
-    const { next } = insertLinePrefix(value, start, '- ');
+    const { next, cursor } = insertLinePrefix(value, start, '- ');
     onChangeText(next);
+    const nextSelection = { start: cursor, end: cursor };
+    selRef.current = nextSelection;
+    setSelection(nextSelection);
+    inputRef.current?.focus();
   }, [onChangeText, value]);
+
+  const codeFence = useCallback(
+    (lang: string) => {
+      const { start, end } = selRef.current;
+      const { next, cursor } = insertCodeFence(value, start, end, lang);
+      onChangeText(next);
+      const nextSelection = { start: cursor, end: cursor };
+      selRef.current = nextSelection;
+      setSelection(nextSelection);
+      inputRef.current?.focus();
+    },
+    [onChangeText, value]
+  );
 
   const borderColor = error ? '#ef4444' : theme.colors.border;
 
@@ -127,8 +177,29 @@ export function MarkdownComposer({
         >
           <Text style={[styles.toolLabel, { color: theme.colors.text }]}>•</Text>
         </Pressable>
+        <Pressable
+          onPress={() => codeFence('')}
+          style={({ pressed }) => [
+            styles.toolBtn,
+            { borderColor: theme.colors.border },
+            pressed && styles.toolBtnPressed,
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel="Code block"
+        >
+          <Text
+            style={[
+              styles.toolLabel,
+              styles.toolMono,
+              { color: theme.colors.text },
+            ]}
+          >
+            {'</>'}
+          </Text>
+        </Pressable>
       </View>
       <TextInput
+        ref={inputRef}
         editable={editable}
         multiline
         placeholder={placeholder}
@@ -138,7 +209,14 @@ export function MarkdownComposer({
         onSelectionChange={onSelectionChange}
         maxLength={maxLength}
         style={composedInputStyle}
+        selection={selection}
         selectionColor={theme.colors.primary}
+        autoComplete="off"
+        autoCorrect={false}
+        autoCapitalize="none"
+        spellCheck={false}
+        textContentType="none"
+        importantForAutofill={Platform.OS === 'android' ? 'no' : undefined}
       />
       {error ? (
         <Text style={[styles.fieldError, errorStyle]} accessibilityRole="alert">
@@ -170,6 +248,15 @@ const styles = StyleSheet.create({
   toolLabel: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  toolMono: {
+    fontFamily: Platform.select({
+      ios: 'Menlo',
+      android: 'monospace',
+      default: 'monospace',
+    }),
+    fontSize: 13,
+    fontWeight: '500',
   },
   input: {
     borderWidth: 1,

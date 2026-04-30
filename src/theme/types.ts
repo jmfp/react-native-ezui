@@ -15,7 +15,6 @@ export type EzuiTheme = {
   constants: EzuiConstants;
 };
 
-/** Use this for the provider's theme prop so callers can pass only the colors they want to override. */
 export type EzuiThemeOverride = {
   colors?: Partial<EzuiColors>;
   constants?: Partial<EzuiConstants>;

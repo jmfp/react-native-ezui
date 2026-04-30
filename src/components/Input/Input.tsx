@@ -1,4 +1,4 @@
-import { TextInput, StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { KeyboardTypeOptions } from 'react-native';
 import type { InputProps } from './types';
 import { useEzuiTheme } from '../../theme/ThemeContext';
@@ -69,7 +69,9 @@ export function Input({
         maxLength={maxLength}
         autoCapitalize={autoCapitalize}
         autoCorrect={autoCorrect}
-        textContentType={textContentType}
+        textContentType={textContentType ?? 'none'}
+        autoComplete="off"
+        importantForAutofill={Platform.OS === 'android' ? 'no' : undefined}
       />
       {error ? (
         <Text style={[styles.fieldError, errorStyle]} accessibilityRole="alert">

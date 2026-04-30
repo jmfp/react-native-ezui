@@ -1,11 +1,9 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Image, type ImageSource } from 'expo-image';
 import { useState } from 'react';
 import type { LoginProps } from './types';
 import { Input } from '../Input';
 import { Button } from '../Button';
 import { useEzuiTheme } from '../../theme/ThemeContext';
-import springHabitShortHeader from '../../../../../../assets/images/SpringHabitShortHeader.png';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -86,12 +84,12 @@ export default function Login({
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.surface }]}>
-      <Image
-        source={springHabitShortHeader as ImageSource}
-        style={styles.logo}
-        contentFit="contain"
-        accessibilityLabel="SpringHabt"
-      />
+      <Text
+        style={[styles.title, { color: theme.colors.text }]}
+        accessibilityRole="header"
+      >
+        Sign in
+      </Text>
       <Input
         placeholder="Email"
         value={emailInput}
@@ -159,10 +157,10 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: '100%',
   },
-  logo: {
+  title: {
     alignSelf: 'center',
-    width: '100%',
-    maxWidth: 280,
-    height: 44,
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 4,
   },
 });
