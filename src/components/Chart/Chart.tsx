@@ -67,6 +67,8 @@ export default function Chart({
   yScale = 'count',
   entranceDelayMs = 0,
   useDataSetLineColors = false,
+  skipEntranceAnimation = false,
+  chartAreaMinHeight,
 }: ChartProps) {
   const theme = useEzuiTheme();
   const [chartWidth, setChartWidth] = useState(0);
@@ -110,7 +112,7 @@ export default function Chart({
 
   useEffect(() => {
     if (chartWidth <= 0) return;
-    if (reduceMotion) {
+    if (reduceMotion || skipEntranceAnimation) {
       entrance.value = 1;
       return;
     }
@@ -122,7 +124,13 @@ export default function Chart({
         easing: Easing.out(Easing.cubic),
       }),
     );
-  }, [chartWidth, reduceMotion, entranceDelayMs, entrance]);
+  }, [
+    chartWidth,
+    reduceMotion,
+    entranceDelayMs,
+    entrance,
+    skipEntranceAnimation,
+  ]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: entrance.value,
@@ -148,7 +156,13 @@ export default function Chart({
         </Text>
       ) : null}
       <Reanimated.View style={animatedStyle}>
-        <View style={styles.chart} onLayout={handleLayout}>
+        <View
+          style={[
+            styles.chart,
+            chartAreaMinHeight != null && { minHeight: chartAreaMinHeight },
+          ]}
+          onLayout={handleLayout}
+        >
           {chartWidth > 0 && (
             <LineChart
               areaChart

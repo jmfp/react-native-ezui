@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
 
 export type MarkdownComposerProps = {
@@ -11,4 +12,9 @@ export type MarkdownComposerProps = {
   inputStyle?: StyleProp<TextStyle>;
   error?: string;
   errorStyle?: StyleProp<TextStyle>;
+  livePreview?: boolean;
+  renderMarkdownPreview?: (markdown: string) => ReactNode;
+  livePreviewDebounceMs?: number;
+  livePreviewMaxHeight?: number;
+  accentColor?: string;
 };

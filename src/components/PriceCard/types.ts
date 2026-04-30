@@ -10,6 +10,7 @@ export type PriceCardProps = {
   ctaText?: string;
   features?: PriceCardFeature[];
   defaultExpanded?: boolean;
+  onboardingTrialHighlight?: boolean;
 };
 
 export type PriceCardFeature = {

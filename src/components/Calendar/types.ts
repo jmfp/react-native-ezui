@@ -16,6 +16,8 @@ export type MinimalCalendarProps = {
   month?: string;
   dotsVerticalSpacing?: number;
   onPress?: () => void;
+  summaryCaption?: string;
+  accentColor?: string;
 };
 
 export type DatePickerProps = {
