@@ -10,6 +10,7 @@ export type InputProps = {
   border?: boolean;
   editable?: boolean;
   selectionColor?: string;
+  cursorColor?: string;
   placeholder: string;
   value: string;
   onChangeText: (text: string) => void;

@@ -24,6 +24,7 @@ export function Input({
   error,
   errorStyle,
   selectionColor,
+  cursorColor,
   secureTextEntry = false,
   type,
   maxLength,
@@ -63,6 +64,7 @@ export function Input({
           textStyle,
         ]}
         selectionColor={selectionColor ?? theme.colors.primary}
+        cursorColor={cursorColor ?? theme.colors.primary}
         placeholderTextColor={theme.colors.textMuted}
         secureTextEntry={secureTextEntry}
         keyboardType={keyboardType}

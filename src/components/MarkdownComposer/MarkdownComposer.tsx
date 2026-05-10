@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import {
+  Modal,
   Platform,
   Pressable,
   StyleSheet,
@@ -9,6 +10,7 @@ import {
   type TextInputProps,
   type TextStyle,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MarkdownComposerProps } from './types';
 import { useEzuiTheme } from '../../theme/ThemeContext';
 
@@ -32,6 +34,27 @@ function insertLinePrefix(value: string, start: number, prefix: string) {
   const next = value.slice(0, lineStart) + prefix + value.slice(lineStart);
   const cursor = start + prefix.length;
   return { next, cursor };
+}
+
+function formatImageMarkdown(alt: string, url: string): string {
+  const u = url.trim();
+  if (!u) return '';
+  const a = (alt.trim() || 'image').replace(/\]/g, '');
+  const href = /[)\s]/.test(u) ? `<${u}>` : u;
+  return `![${a}](${href})`;
+}
+
+function insertImageMarkdown(
+  value: string,
+  start: number,
+  end: number,
+  alt: string,
+  url: string
+): { next: string; cursor: number } {
+  const insertion = formatImageMarkdown(alt, url);
+  if (!insertion) return { next: value, cursor: start };
+  const next = value.slice(0, start) + insertion + value.slice(end);
+  return { next, cursor: start + insertion.length };
 }
 
 function insertCodeFence(
@@ -69,11 +92,15 @@ export function MarkdownComposer({
   errorStyle,
 }: MarkdownComposerProps) {
   const theme = useEzuiTheme();
+  const insets = useSafeAreaInsets();
   const selRef = useRef({ start: 0, end: 0 });
   const inputRef = useRef<TextInput>(null);
   const [selection, setSelection] = useState<{ start: number; end: number } | undefined>(
     undefined
   );
+  const [imageOpen, setImageOpen] = useState(false);
+  const [imageUrl, setImageUrl] = useState('');
+  const [imageAlt, setImageAlt] = useState('');
 
   const onSelectionChange: NonNullable<
     TextInputProps['onSelectionChange']
@@ -117,6 +144,23 @@ export function MarkdownComposer({
     },
     [onChangeText, value]
   );
+
+  const applyImageFromUrl = useCallback(() => {
+    const u = imageUrl.trim();
+    if (!/^https?:\/\//i.test(u)) {
+      return;
+    }
+    const { start, end } = selRef.current;
+    const { next, cursor } = insertImageMarkdown(value, start, end, imageAlt, u);
+    onChangeText(next);
+    const nextSelection = { start: cursor, end: cursor };
+    selRef.current = nextSelection;
+    setSelection(nextSelection);
+    setImageOpen(false);
+    setImageUrl('');
+    setImageAlt('');
+    inputRef.current?.focus();
+  }, [imageUrl, imageAlt, onChangeText, value]);
 
   const borderColor = error ? '#ef4444' : theme.colors.border;
 
@@ -197,7 +241,106 @@ export function MarkdownComposer({
             {'</>'}
           </Text>
         </Pressable>
+        <Pressable
+          onPress={() => setImageOpen(true)}
+          style={({ pressed }) => [
+            styles.toolBtn,
+            { borderColor: theme.colors.border },
+            pressed && styles.toolBtnPressed,
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel="Insert image from URL"
+        >
+          <Text style={[styles.toolLabel, { color: theme.colors.text }]}>Img</Text>
+        </Pressable>
       </View>
+      <Modal
+        visible={imageOpen}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setImageOpen(false)}
+      >
+        <Pressable style={styles.imageOverlay} onPress={() => setImageOpen(false)}>
+          <Pressable
+            style={[
+              styles.imageSheet,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+                paddingBottom: Math.max(insets.bottom, 16) + 8,
+              },
+            ]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <Text style={[styles.imageSheetTitle, { color: theme.colors.text }]}>
+              Image from URL
+            </Text>
+            <Text style={[styles.imageHint, { color: theme.colors.textMuted }]}>
+              http(s) image URL (png, jpg, webp, gif, …).
+            </Text>
+            <TextInput
+              value={imageUrl}
+              onChangeText={setImageUrl}
+              placeholder="https://…"
+              placeholderTextColor={theme.colors.textMuted}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+              style={[
+                styles.imageInput,
+                {
+                  borderColor: theme.colors.border,
+                  backgroundColor: theme.colors.background,
+                  color: theme.colors.text,
+                },
+              ]}
+            />
+            <TextInput
+              value={imageAlt}
+              onChangeText={setImageAlt}
+              placeholder="Description (optional)"
+              placeholderTextColor={theme.colors.textMuted}
+              style={[
+                styles.imageInput,
+                styles.imageInputAlt,
+                {
+                  borderColor: theme.colors.border,
+                  backgroundColor: theme.colors.background,
+                  color: theme.colors.text,
+                },
+              ]}
+            />
+            <View style={styles.imageActions}>
+              <Pressable
+                onPress={() => {
+                  setImageOpen(false);
+                  setImageUrl('');
+                  setImageAlt('');
+                }}
+                style={[styles.imageBtnSecondary, { borderColor: theme.colors.border }]}
+              >
+                <Text style={{ color: theme.colors.textMuted, fontWeight: '600' }}>
+                  Cancel
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={applyImageFromUrl}
+                disabled={!/^https?:\/\//i.test(imageUrl.trim())}
+                style={({ pressed }) => [
+                  styles.imageBtnPrimary,
+                  {
+                    backgroundColor: theme.colors.primary,
+                    opacity:
+                      !/^https?:\/\//i.test(imageUrl.trim()) ? 0.45 : pressed ? 0.85 : 1,
+                  },
+                ]}
+              >
+                <Text style={styles.imageBtnPrimaryText}>Insert</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
       <TextInput
         ref={inputRef}
         editable={editable}
@@ -211,6 +354,7 @@ export function MarkdownComposer({
         style={composedInputStyle}
         selection={selection}
         selectionColor={theme.colors.primary}
+        cursorColor={theme.colors.primary}
         autoComplete="off"
         autoCorrect={false}
         autoCapitalize="none"
@@ -234,6 +378,7 @@ const styles = StyleSheet.create({
   },
   toolbar: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
   },
   toolBtn: {
@@ -268,4 +413,45 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     color: '#ef4444',
   },
+  imageOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.55)',
+  },
+  imageSheet: {
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+  },
+  imageSheetTitle: { fontSize: 17, fontWeight: '700', marginBottom: 8 },
+  imageHint: { fontSize: 13, marginBottom: 12 },
+  imageInput: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+  },
+  imageInputAlt: { marginTop: 10 },
+  imageActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 16,
+  },
+  imageBtnSecondary: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  imageBtnPrimary: {
+    flex: 1,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  imageBtnPrimaryText: { color: '#000', fontWeight: '700', fontSize: 16 },
 });

@@ -118,10 +118,11 @@ export default function ActivityTracker({
     const totalSlots = rows * cols;
     const main = getGridDates(YEAR_DAYS);
     const pad = totalSlots - YEAR_DAYS;
-    const padded: { date: Date; key: string }[] = [...main];
+    const padded: { date: Date; key: string }[] = [];
     for (let p = 0; p < pad; p++) {
       padded.push({ date: new Date(0), key: `__pad_${p}` });
     }
+    padded.push(...main);
     return {
       numColumns: cols,
       cellSize: Math.max(1, size),
