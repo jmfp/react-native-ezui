@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import {
+  KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
@@ -260,18 +261,23 @@ export function MarkdownComposer({
         transparent
         onRequestClose={() => setImageOpen(false)}
       >
-        <Pressable style={styles.imageOverlay} onPress={() => setImageOpen(false)}>
-          <Pressable
-            style={[
-              styles.imageSheet,
-              {
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
-                paddingBottom: Math.max(insets.bottom, 16) + 8,
-              },
-            ]}
-            onPress={(e) => e.stopPropagation()}
-          >
+        <KeyboardAvoidingView
+          style={styles.imageKeyboardRoot}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
+        >
+          <Pressable style={styles.imageOverlay} onPress={() => setImageOpen(false)}>
+            <Pressable
+              style={[
+                styles.imageSheet,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                  paddingBottom: Math.max(insets.bottom, 16) + 8,
+                },
+              ]}
+              onPress={(e) => e.stopPropagation()}
+            >
             <Text style={[styles.imageSheetTitle, { color: theme.colors.text }]}>
               Image from URL
             </Text>
@@ -340,6 +346,7 @@ export function MarkdownComposer({
             </View>
           </Pressable>
         </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
       <TextInput
         ref={inputRef}
@@ -412,6 +419,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginLeft: 4,
     color: '#ef4444',
+  },
+  imageKeyboardRoot: {
+    flex: 1,
   },
   imageOverlay: {
     flex: 1,
