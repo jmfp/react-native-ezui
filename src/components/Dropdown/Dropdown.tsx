@@ -48,6 +48,7 @@ export default function Dropdown({
       {isOpen && (
         <ScrollView
           style={[styles.options, { backgroundColor: theme.colors.surface }]}
+          showsVerticalScrollIndicator={false}
         >
           {options.map((option) => (
             <Pressable

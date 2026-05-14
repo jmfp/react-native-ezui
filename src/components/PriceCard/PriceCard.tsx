@@ -32,6 +32,7 @@ export default function PriceCard({
           <FlatList
             data={features ?? []}
             horizontal
+            showsVerticalScrollIndicator={false}
             showsHorizontalScrollIndicator={false}
             keyExtractor={(item, index) => `${item.title}-${index}`}
             contentContainerStyle={styles.features}

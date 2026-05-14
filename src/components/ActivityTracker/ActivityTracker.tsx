@@ -181,6 +181,7 @@ export default function ActivityTracker({
           data={gridCells}
           numColumns={numColumns}
           scrollEnabled={false}
+          showsVerticalScrollIndicator={false}
           keyExtractor={(item) => item.key}
           key={`grid-${numColumns}-${gridCells.length}`}
           style={styles.flatList}
