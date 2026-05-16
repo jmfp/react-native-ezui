@@ -48,6 +48,7 @@ export default function Dropdown({
       {isOpen && (
         <ScrollView
           style={[styles.options, { backgroundColor: theme.colors.surface }]}
+          contentContainerStyle={styles.optionsContent}
           showsVerticalScrollIndicator={false}
         >
           {options.map((option) => (
@@ -94,7 +95,12 @@ const styles = StyleSheet.create({
     marginTop: 16,
     borderRadius: 16,
   },
+  optionsContent: {
+    paddingTop: 10,
+    paddingBottom: 10,
+  },
   option: {
-    padding: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
   },
 });
